@@ -1,0 +1,55 @@
+# mac OS
+**/.DS_Store
+
+# env file
+.vscode
+.idea
+
+# generated files
+build
+cmake-build-debug
+cmake-build-release
+Makefile
+*.a
+
+# related projects
+gkr-compiler
+libra-gkr
+zk_old
+GKR-C
+XKCP
+
+# notes
+notes.md
+
+# cmake
+*.cmake
+CMakeCache.txt
+CMakeFiles/
+
+# python scripts
+*.py
+
+# Makefile
+Makefile
+
+# executables
+ff
+keccak_est
+gkr
+keccak_benchmark
+
+# circuits
+circuit8.txt
+
+# compialtion
+compile_commands.json
+
+# ninja
+*.ninja*
+
+# Testing folder
+Testing/
+
+# _deps
+_deps/
