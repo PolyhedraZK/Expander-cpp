@@ -1,40 +1,81 @@
 #pragma once
 
-// Raw POLYNOMIAL COMMITMENT
-// This file contains the raw polynomial commitment scheme.
-// The scheme will transmit all the coefficients of the polynomial.
-// With tar.gz compression
-
-// This will be used if the polynomial is small enough and ZK is not needed
 #include "poly.hpp"
 
-void compress(const std::vector<char>& input, std::vector<char>& output)
+namespace gkr
 {
-    output = input;
-}
 
 template<typename F>
-char* commit(gkr::MultiLinearPoly<F> poly)
+class RawCommitment
 {
-    // Serialize the polynomial
-    std::vector<char> serialized;
-    for (F eval : poly.evals)
+public:
+    std::vector<F> poly_vals;
+
+    uint32 size() const
     {
-        std::vector<char> eval_bytes = eval.to_bytes();
-        serialized.insert(serialized.end(), eval_bytes.begin(), eval_bytes.end());
+        return sizeof(F) * poly_vals.size();
     }
 
-    // Compress the serialized polynomial
-    std::vector<char> compressed;
-    compress(serialized, compressed);
+    void to_bytes(uint8* output) const
+    {
+        uint32 idx = 0;
+        for (const F &x: poly_vals)
+        {
+            x.to_bytes(output + idx * sizeof(F));
+            idx++;
+        }
+    }
 
-    // Return the compressed polynomial
-    return compressed.data();
-}
+    void from_bytes(const uint8* input, uint32 poly_size)
+    {
+        uint32 idx = 0;
+        poly_vals.resize(poly_size);
+        for (uint32 i = 0; i < poly_size; i++)
+        {
+            poly_vals[i].from_bytes(input + idx);
+            idx += sizeof(F);
+        }
+    }
+};
 
-template<typename F>
-char* open(const gkr::MultiLinearPoly<F>& poly, const F& x) // no need to open, because the verifier got all coefficients
+class RawOpening
 {
-    return NULL;
-}
+public:
+    uint32 size() const
+    {
+        return 0;
+    }
 
+    void to_bytes(uint8* output) const
+    {
+        return;
+    }
+
+    void from_bytes(const uint8* input, uint32 poly_size)
+    {
+        return; 
+    }
+};
+
+
+template<typename F, typename F_primitive>
+class RawPC
+{
+public:
+    std::vector<F> poly_vals;
+
+    RawCommitment<F> commit(const std::vector<F> &poly_vals_)
+    {
+        poly_vals = poly_vals_;
+        RawCommitment<F> c;
+        c.poly_vals = poly_vals;
+        return c;
+    }
+    RawOpening open(const std::vector<F_primitive> &x) {return RawOpening();};
+    bool verify(const RawCommitment<F> &commitment, const RawOpening &opening, const std::vector<F_primitive> &x, const F &y)
+    {
+        return eval_multilinear(commitment.poly_vals, x) == y;
+    };
+};
+
+}

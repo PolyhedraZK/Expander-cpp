@@ -1,6 +1,8 @@
 #ifndef GKR_TRANSCRIPT_H
 #define GKR_TRANSCRIPT_H
 
+#include <iostream>
+#include <fstream>
 #include <vector>
 
 #include "hash/hashes.hpp"
@@ -8,53 +10,146 @@
 namespace gkr
 {
 
+template<typename F>
+class Proof
+{
+public:
+    uint32 idx, commitment_nb_bytes, opening_nb_bytes;
+    std::vector<uint8> bytes;
+
+    Proof()
+    {
+        idx = 0;
+        bytes.resize(0);
+    }
+
+    void append_bytes(const uint8* input_bytes, uint32 len)
+    {
+        bytes.insert(bytes.end(), input_bytes, input_bytes + len);
+    }
+
+    inline void reset()
+    {
+        idx = 0;
+    }
+
+    const uint8* bytes_head()
+    {
+        return bytes.data() + idx;
+    }
+
+    inline void step(uint32 nb_bytes)
+    {
+        idx += nb_bytes;
+    }
+
+    inline F get_next_and_step()
+    {
+        F f;
+        f.from_bytes(bytes.data() + idx);
+        step(sizeof(F));
+        return f;
+    }
+
+    void write_and_compress(const char* proof_loc="/tmp/proof.txt", const char* compressed_proof_loc="/tmp/compressed_proof.tar.gz")
+    {
+        ofstream f(proof_loc);
+
+        uint32 nb_bytes = bytes.size();
+        f.write((char*) &nb_bytes, 4);
+        f.write((char*) bytes.data(), nb_bytes);
+        f.close();
+
+        char command[1000];
+        sprintf(command, "tar -czf %s --absolute-names %s", compressed_proof_loc, proof_loc);
+        system(command);
+    }
+
+    void read_compressed_proof(const char* compressed_proof_loc="/tmp/compressed_proof.tar.gz")
+    {
+        char command[1000];
+        sprintf(command, "tar -xzf %s -C %s", compressed_proof_loc, "/tmp");
+        read_proof("/tmp/proof.txt");
+    }
+
+    void read_proof(const char* proof_loc="/tmp/proof.txt")
+    {
+        ifstream f(proof_loc);
+
+        uint32 nb_bytes;
+        f.read((char*) &nb_bytes, 4);
+        bytes.resize(nb_bytes);
+        f.read((char*) bytes.data(), nb_bytes);
+        f.close();
+    }
+};
+
 template <typename F, typename F_primitive>
 class Transcript
 {
 private:
-    uint32 _mem_pool_size()
+    inline void _hash_to_digest()
     {
-        return digest_size_in_bytes + mem_pool_size_in_Fs * sizeof(F);
+        uint32 hash_end_idx = proof.bytes.size();
+        if (hash_end_idx - hash_start_idx > 0)
+        {
+            hasher.hash(digest, proof.bytes.data() + hash_start_idx, hash_end_idx - hash_start_idx);
+            hash_start_idx = hash_end_idx;
+        }
+        else 
+        {
+            hasher.hash(digest, digest, digest_size);
+        }
     }
 
 public:
-    static const uint32 digest_size_in_bytes = 32;
-    static const uint32 mem_pool_size_in_Fs = 10;
+    const static uint32 digest_size = 32;
 
 public:
+    // recording the proof
+    Proof<F> proof;
+
+public:
+    // produce the randomness
     SHA256Hasher hasher;
-    uint8 mem[digest_size_in_bytes + mem_pool_size_in_Fs * sizeof(F)];
-    uint32 cur_mem_size;
+    uint32 hash_start_idx;
+    uint8 digest[digest_size];
 
     Transcript()
     {
+        proof = Proof<F>();
+
         hasher = SHA256Hasher();
-        memset(mem, 0, digest_size_in_bytes);
-        cur_mem_size = digest_size_in_bytes;
+        hash_start_idx = 0;
+        memset(digest, 0, digest_size);
+    }
+
+    void append_bytes(const uint8* bytes, uint32 len)
+    { 
+        proof.append_bytes(bytes, len);
     }
 
     void append_f(const F &f)
     {
-        assert(cur_mem_size + sizeof(F) <= _mem_pool_size());
-        f.to_bytes(mem + cur_mem_size);
-        cur_mem_size += sizeof(F);
+        uint32 cur_size = proof.bytes.size();
+        proof.bytes.resize(cur_size + sizeof(F));
+        f.to_bytes(proof.bytes.data() + cur_size);
     }
 
     F_primitive challenge_f()
     {
-        hasher.hash(mem, mem, cur_mem_size);
-        cur_mem_size = digest_size_in_bytes;
+        _hash_to_digest();
 
         F_primitive f;
-        f.from_bytes(mem); 
+        assert(sizeof(F_primitive) <= digest_size);
+        f.from_bytes(digest); 
         return f;
     }
 
     uint64 challenge_uint64()
     {
-        hasher.hash(mem, mem, cur_mem_size);
-        cur_mem_size = digest_size_in_bytes;
-        return *reinterpret_cast<uint64*>(mem);
+        _hash_to_digest();
+        return *reinterpret_cast<uint64*>(digest);
     }
 
     std::vector<F_primitive> challenge_fs(size_t n)
@@ -66,7 +161,6 @@ public:
         }
         return cs;
     }
-
 };
 
 }

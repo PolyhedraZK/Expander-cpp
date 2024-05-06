@@ -33,10 +33,9 @@ void load_circuit(int i)
 
 std::pair<float, int> bench_func(int thread_id)
 {
-    GKRProof<F> proof;
     auto t0 = std::chrono::high_resolution_clock::now();
-    F claimed_value;
-    std::tie(proof, claimed_value) = gkr_prove<F, F_primitive>(circuits[thread_id], scratch_pad[thread_id], set_print);
+    Transcript<F, F_primitive> transcript;
+    F claimed_value = std::get<0>(gkr_prove<F, F_primitive>(circuits[thread_id], scratch_pad[thread_id], transcript, set_print));
     auto t1 = std::chrono::high_resolution_clock::now();
     float proving_time = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
     const int circuit_copy_size = 8;

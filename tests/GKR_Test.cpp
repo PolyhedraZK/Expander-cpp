@@ -1,8 +1,34 @@
+#include <iostream>
 #include <gtest/gtest.h>
 
 #include "field/M31.hpp"
 #include "LinearGKR/gkr.hpp"
-#include <iostream>
+#include "LinearGKR/LinearGKR.hpp"
+
+TEST(GKR_TEST, GKR_WITH_PC_TEST)
+{
+    using namespace gkr;
+    using F = gkr::M31_field::VectorizedM31;
+    using F_primitive = gkr::M31_field::M31;
+
+    uint32 n_layers = 4;
+    Circuit<F, F_primitive> circuit;
+    for (int i = n_layers - 1; i >= 0; --i)
+    {
+        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2));
+    }
+    circuit.evaluate();
+
+    Config default_config{};
+    Prover prover(default_config);
+    auto t = prover.prove(circuit);
+    F claimed_v = std::get<0>(t);
+    Proof<F> proof = std::get<1>(t);
+
+    Verifier verifier(default_config);
+    bool verified = verifier.verify(circuit, claimed_v, proof);
+    EXPECT_TRUE(verified);
+}
 
 TEST(GKR_TEST, GKR_CORRECTNESS_TEST)
 {
@@ -18,15 +44,18 @@ TEST(GKR_TEST, GKR_CORRECTNESS_TEST)
     }
     circuit.evaluate();
 
-    GKRProof<F> proof;
-    F claimed_value;
     GKRScratchPad<F, F_primitive> scratch_pad;
     scratch_pad.prepare(circuit);
     // GTest Print to see the claimed value
-    srand(42);
-    std::tie(proof, claimed_value) = gkr_prove<F, F_primitive>(circuit, scratch_pad);
-    srand(42);
-    bool verified = gkr_verify<F, F_primitive>(circuit, claimed_value, proof);    
+    Transcript<F, F_primitive> prover_transcript;
+    auto t = gkr_prove<F, F_primitive>(circuit, scratch_pad, prover_transcript);
+    F claimed_value = std::get<0>(t); 
+
+    Proof<F> &proof = prover_transcript.proof;
+    // proof.write_and_compress();
+    // proof.read_compressed_proof();
+    Transcript<F, F_primitive> verifier_transcript;
+    bool verified = std::get<0>(gkr_verify<F, F_primitive>(circuit, claimed_value, verifier_transcript, proof));    
     EXPECT_TRUE(verified);
 
     F non_zero = F::random();
@@ -34,8 +63,9 @@ TEST(GKR_TEST, GKR_CORRECTNESS_TEST)
     {
         non_zero = F::random();
     }
-    srand(42);
-    bool not_verified = gkr_verify<F, F_primitive>(circuit, claimed_value + non_zero, proof);
+    proof.reset();
+    Transcript<F, F_primitive> verifier_transcript_fail;
+    bool not_verified = std::get<0>(gkr_verify<F, F_primitive>(circuit, claimed_value + non_zero, verifier_transcript_fail, proof));
     EXPECT_FALSE(not_verified);
 }
 
@@ -59,22 +89,24 @@ TEST(GKR_TEST, GKR_FROM_CIRCUIT_RAW_TEST)
     std::cout << "Circuit Evaluated" << std::endl;
     GKRScratchPad<F, F_primitive> scratch_pad{};
     scratch_pad.prepare(circuit);
-    GKRProof<F> proof;
-    F claimed_value;
-    srand(42);
-    std::tie(proof, claimed_value) = gkr_prove<F, F_primitive>(circuit, scratch_pad);
+    Transcript<F, F_primitive> prover_transcript;
+    auto t = gkr_prove<F, F_primitive>(circuit, scratch_pad, prover_transcript);
+    F claimed_value = std::get<0>(t);
     std::cout << "Proof Generated" << std::endl;
-    srand(42);
-    bool verified = gkr_verify<F, F_primitive>(circuit, claimed_value, proof);    
+   
+    Proof<F> &proof = prover_transcript.proof;
+    Transcript<F, F_primitive> verifier_transcript;
+    bool verified = std::get<0>(gkr_verify<F, F_primitive>(circuit, claimed_value, verifier_transcript, proof));    
     EXPECT_TRUE(verified);
 
     F non_zero = F::random();
     while (non_zero == F::zero())
     {
-        printf("wtf\n");
         non_zero = F::random();
     }
-    bool not_verified = gkr_verify<F, F_primitive>(circuit, claimed_value + non_zero, proof);
+    proof.reset();
+    Transcript<F, F_primitive> verifier_transcript_fail;
+    bool not_verified = std::get<0>(gkr_verify<F, F_primitive>(circuit, claimed_value + non_zero, verifier_transcript_fail, proof));
     EXPECT_FALSE(not_verified);
 }
 
