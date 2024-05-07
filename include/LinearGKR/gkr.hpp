@@ -5,7 +5,18 @@
 #include "sumcheck.hpp"
 #include "circuit/circuit.hpp"
 #include <map>
+#include "configuration/config.hpp"
 #include <chrono>
+
+inline int ceil(int a, int b)
+{
+    if (a % b == 0)
+    {
+        return a / b;
+    }
+    return a / b + 1;
+}
+
 namespace gkr
 {
 
@@ -14,9 +25,27 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>> gkr_prove(
     const Circuit<F, F_primitive> &circuit, 
     GKRScratchPad<F, F_primitive> &scratch_pad,
     Transcript<F, F_primitive> &transcript,
+    Config &local_config,
     bool set_print = false
 )
 {
+    // Grinding 
+    auto initial_hash = transcript.challenge_fs(256/local_config.field_size);
+    uint8 hash_bytes[256 / 8];
+    auto bytes_ptr = 0;
+    for(int i = 0; i < initial_hash.size(); i++)
+    {
+        auto element = initial_hash[i];
+        element.to_bytes(&hash_bytes[bytes_ptr]);
+        bytes_ptr += ceil(local_config.field_size, 8);
+    }
+
+    for(int i = 0; i < (1 << local_config.grinding_bits); i++)
+    {
+        transcript.hasher.hash(hash_bytes, hash_bytes, 256 / 8);
+    }
+    transcript.append_bytes(hash_bytes, 256/8);
+
     Timing timer;
     timer.set_print(set_print);
     timer.add_timing("start proof");
