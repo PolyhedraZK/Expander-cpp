@@ -53,7 +53,7 @@ public:
 
     void write_and_compress(const char* proof_loc="/tmp/proof.txt", const char* compressed_proof_loc="/tmp/compressed_proof.tar.gz")
     {
-        ofstream f(proof_loc);
+        std::ofstream f(proof_loc);
 
         uint32 nb_bytes = bytes.size();
         f.write((char*) &nb_bytes, 4);
@@ -74,7 +74,7 @@ public:
 
     void read_proof(const char* proof_loc="/tmp/proof.txt")
     {
-        ifstream f(proof_loc);
+        std::ifstream f(proof_loc);
 
         uint32 nb_bytes;
         f.read((char*) &nb_bytes, 4);

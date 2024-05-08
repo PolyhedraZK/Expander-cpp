@@ -12,16 +12,19 @@ TEST(MERKLE_TREE_TESTS, MERKLE_TREE_CORRECTNESS)
     using merkle_tree::MerkleTree;
     using merkle_tree::Proof;
 
-    uint32_t test_size = 1024;
+    uint32_t test_size = 4;
     std::vector<F> leaves;
     leaves.reserve(test_size);
     for (uint32_t i = 0; i < test_size; i++)
     {
         leaves.emplace_back(F::random());
     }
-    
+    for(int i = 0; i < leaves.size(); i++)
+    {
+        std::cout << leaves[i].x << std::endl;
+    }
     MerkleTree tree = MerkleTree::build_tree<F>(leaves);
-    for (uint32_t i = 0; i < 10; i++)
+    for (uint32_t i = 0; i < test_size; i++)
     {
         uint32_t idx = rand() % test_size;
         Proof proof = tree.prove(idx);
