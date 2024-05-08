@@ -88,7 +88,7 @@ public:
 template<typename F, typename F_primitive>
 F eval_multilinear(const std::vector<F>& evals, const std::vector<F_primitive>& x)
 {
-    assert((1 << x.size()) == evals.size());
+    assert((1UL << x.size()) == evals.size());
     std::vector<F> scratch = evals;
 
     uint32 cur_eval_size = evals.size() >> 1;

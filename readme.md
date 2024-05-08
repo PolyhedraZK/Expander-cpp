@@ -67,6 +67,15 @@ Run command:
 ./bin/keccak_benchmark
 ```
 
+## FAQ
+
+### Illegal instruction (core dumped)
+It indicates your CPU is not supported, please check the supported CPU list above. We might support older CPU if there is a demand.
+
+
+### Benchmark method
+We run the program for 5 minutes and take average of the results.
+
 ## How to contribute?
 
 Thank you for your interest in contributing to our project! We seek contributors with a robust background in cryptography and programming, aiming to improve and expand the capabilities of our proof generation system.

@@ -30,6 +30,7 @@ private:
     int vectorize_size;
 
 public:
+    int field_size;
     int security_bits;
     int grinding_bits;
     int nb_parallel;
@@ -39,8 +40,6 @@ public:
     void initialize_config()
     {
         security_bits = 100;
-        grinding_bits = 0;
-        int field_size = 0;
         switch (field_type)
         {
         case M31:

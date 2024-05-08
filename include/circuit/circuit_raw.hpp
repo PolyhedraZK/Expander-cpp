@@ -57,14 +57,24 @@ public:
     vector<GateMul<F>> gate_muls;
     vector<GateAdd<F>> gate_adds;
     vector<GateConst<F>> gate_consts;
-
+    int bit_width(unsigned long long x) 
+    {
+        int cnt = 0;
+        // return log2(x) + 1
+        while(x)
+        {
+            x >>= 1;
+            cnt++;
+        }
+        return cnt;
+    }
     const size_t i_len_log2() const
     {
-        return std::bit_width(i_len) - 1;
+        return bit_width(i_len) - 1;
     }
     const size_t o_len_log2() const
     {
-        return std::bit_width(o_len) - 1;
+        return bit_width(o_len) - 1;
     }
     const bool contain_gates() const
     {

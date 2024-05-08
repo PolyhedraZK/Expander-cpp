@@ -5,9 +5,21 @@
 #include "sumcheck.hpp"
 #include "circuit/circuit.hpp"
 #include <map>
+#include "configuration/config.hpp"
 #include <chrono>
+
+inline int ceil(int a, int b)
+{
+    if (a % b == 0)
+    {
+        return a / b;
+    }
+    return a / b + 1;
+}
+
 namespace gkr
 {
+
 
 template<typename F, typename F_primitive>
 std::tuple<std::vector<F>, std::vector<std::vector<F_primitive>>, std::vector<std::vector<F_primitive>>> gkr_prove(

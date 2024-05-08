@@ -35,7 +35,6 @@ TEST(GKR_TEST, GKR_CORRECTNESS_TEST)
     using namespace gkr;
     using F = gkr::M31_field::VectorizedM31;
     using F_primitive = gkr::M31_field::M31;
-
     uint32 n_layers = 4;
     Circuit<F, F_primitive> circuit;
     for (int i = n_layers - 1; i >= 0; --i)
