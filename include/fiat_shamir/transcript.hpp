@@ -161,6 +161,17 @@ public:
         }
         return cs;
     }
+    void print_state()
+    {
+        challenge_f();
+        std::cout << "Proof size: " << proof.bytes.size() << std::endl;
+        std::cout << "Hash start idx: " << hash_start_idx << std::endl;
+        for (int i = 0; i < digest_size; i++)
+        {
+            std::cout << (int) digest[i] << " ";
+        }
+        std::cout << std::endl;
+    }
 };
 
 }
