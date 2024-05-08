@@ -81,7 +81,7 @@ public:
         FS_hash = SHA256;
         initialize_config();
     }
-    int get_num_repetitions()
+    int get_num_repetitions() const
     {
         return num_repetitions;
     }

@@ -31,7 +31,7 @@ void load_circuit(int i)
 
 std::pair<float, int> bench_func(int thread_id, Config &local_config)
 {
-    Prover prover(local_config);
+    Prover<F, F_primitive> prover(local_config);
     prover.prepare_mem(circuits[thread_id]); // exclude this because we can reuse the memory for different instances once allocated
     auto t0 = std::chrono::high_resolution_clock::now();
     prover.prove(circuits[thread_id]);
@@ -78,7 +78,7 @@ int main()
 	for(int i = 0; i < num_thread; i++)
 		total_proofs += partial_proofs[i];
 	auto throughput = total_proofs / duration;
-        std::cout << "Throughput: " << throughput / local_config.get_num_repetitions() << " keccaks/s" << std::endl;
+        std::cout << "Throughput: " << throughput << " keccaks/s" << std::endl;
     }
     for (auto& thread : threads) {
         thread.join();

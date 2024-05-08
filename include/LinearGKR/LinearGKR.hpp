@@ -31,11 +31,12 @@ void grind(Transcript<F, F_primitive> &transcript, const Config &local_config)
     transcript.append_bytes(hash_bytes, 256/8);
 }
 
+template<typename F, typename F_primitive>
 class Prover
 {
 public:
     const Config &config;
-    void* pad;
+    GKRScratchPad<F, F_primitive>* scratch_pad;
 
 public:
     Prover(const Config &config_): config(config_)
@@ -45,47 +46,45 @@ public:
         assert(config.PC_type == Polynomial_commitment_type::Raw);
     }
 
-    template<typename F, typename F_primitive>
     void prepare_mem(const Circuit<F, F_primitive>& circuit)
     {
-        GKRScratchPad<F, F_primitive>* scratch_pad = new GKRScratchPad<F, F_primitive>;
-        scratch_pad->prepare(circuit);
-        pad = reinterpret_cast<void*>(scratch_pad);
+        scratch_pad = new GKRScratchPad<F, F_primitive>[config.get_num_repetitions()];
+        for(int i = 0; i < config.get_num_repetitions(); i++)
+        {
+            scratch_pad[i].prepare(circuit);
+        }
     }
 
-    template<typename F, typename F_primitive>
-    std::tuple<F, Proof<F>> prove(const Circuit<F, F_primitive>& circuit)
+    std::tuple<std::vector<F>, Proof<F>> prove(const Circuit<F, F_primitive>& circuit)
     {
-        GKRScratchPad<F, F_primitive> &scratch_pad = 
-            *(reinterpret_cast<GKRScratchPad<F, F_primitive>*>(pad));
-
         // pc commit
         RawPC<F, F_primitive> raw_pc;
         RawCommitment<F> commitment = raw_pc.commit(circuit.layers[0].input_layer_vals.evals);
-        uint8* buffer = (uint8*) scratch_pad.v_evals;
+        uint8* buffer = (uint8*) scratch_pad[0].v_evals;
         commitment.to_bytes(buffer);
-
         Transcript<F, F_primitive> transcript;
         transcript.append_bytes(buffer, commitment.size());
 
         //grinding
         grind(transcript, config);
-
         // gkr
-        auto t = gkr_prove<F, F_primitive>(circuit, scratch_pad, transcript);
+        auto t = gkr_prove<F, F_primitive>(circuit, scratch_pad, transcript, config);
         
         // open
-        F claimed_v = std::get<0>(t);
-        std::vector<F_primitive> rz1 = std::get<1>(t);
-        std::vector<F_primitive> rz2 = std::get<2>(t);
-        
-        RawOpening opening1 = raw_pc.open(rz1);
-        opening1.to_bytes(buffer);
-        transcript.append_bytes(buffer, opening1.size());
+        auto claimed_v = std::get<0>(t);
+        auto rz1s = std::get<1>(t);
+        auto rz2s = std::get<2>(t);
+        for(int i = 0; i < config.get_num_repetitions(); i++)
+        {
+            RawOpening opening1 = raw_pc.open(rz1s[i]);
+            opening1.to_bytes(buffer);
+            transcript.append_bytes(buffer, opening1.size());
 
-        RawOpening opening2 = raw_pc.open(rz2);
-        opening2.to_bytes(buffer);
-        transcript.append_bytes(buffer, opening2.size());
+            RawOpening opening2 = raw_pc.open(rz2s[i]);
+            opening2.to_bytes(buffer);
+            transcript.append_bytes(buffer, opening2.size());
+        }
+        delete [] scratch_pad;
         
         return {claimed_v, transcript.proof};
     }
@@ -103,7 +102,7 @@ public:
     }
 
     template<typename F, typename F_primitive>
-    bool verify(const Circuit<F, F_primitive>& circuit, const F& claimed_v, Proof<F>& proof)
+    bool verify(const Circuit<F, F_primitive>& circuit, const std::vector<F>& claimed_v, Proof<F>& proof)
     {
         GKRScratchPad<F, F_primitive> scratch_pad;
         scratch_pad.prepare(circuit);
@@ -122,27 +121,28 @@ public:
         proof.step(commitment.size() + 256/8);
 
         // gkr
-        auto t = gkr_verify<F, F_primitive>(circuit, claimed_v, transcript, proof);
+        auto t = gkr_verify<F, F_primitive>(circuit, claimed_v, transcript, proof, config);
         
         // verify pc
         bool verified = std::get<0>(t);
-        std::vector<F_primitive> rz1 = std::get<1>(t);
-        std::vector<F_primitive> rz2 = std::get<2>(t);
-        F claimed_v1 = std::get<3>(t);
-        F claimed_v2 = std::get<4>(t);
-        
-        RawOpening opening1;
-        opening1.from_bytes(proof.bytes_head(), poly_size);
-        proof.step(opening1.size());
+        auto rz1 = std::get<1>(t);
+        auto rz2 = std::get<2>(t);
+        auto claimed_v1 = std::get<3>(t);
+        auto claimed_v2 = std::get<4>(t);
+        for(int i = 0; i < config.get_num_repetitions(); i++)
+        {
+            RawOpening opening1;
+            opening1.from_bytes(proof.bytes_head(), poly_size);
+            proof.step(opening1.size());
 
-        RawOpening opening2;
-        opening2.from_bytes(proof.bytes_head(), poly_size);
-        proof.step(opening2.size());
-        
-        RawPC<F, F_primitive> raw_pc;
-        verified &= raw_pc.verify(commitment, opening1, rz1, claimed_v1);
-        verified &= raw_pc.verify(commitment, opening2, rz2, claimed_v2);
-
+            RawOpening opening2;
+            opening2.from_bytes(proof.bytes_head(), poly_size);
+            proof.step(opening2.size());
+            
+            RawPC<F, F_primitive> raw_pc;
+            verified &= raw_pc.verify(commitment, opening1, rz1[i], claimed_v1[i]);
+            verified &= raw_pc.verify(commitment, opening2, rz2[i], claimed_v2[i]);
+        }
         return verified;
     }
 };
