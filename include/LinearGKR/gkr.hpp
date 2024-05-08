@@ -60,7 +60,7 @@ std::tuple<std::vector<F>, std::vector<std::vector<F_primitive>>, std::vector<st
         timer.add_timing(string("layer " + to_string(i) + " sumcheck layer input size ") + std::to_string(circuit.layers[i].nb_input_vars) + string(" output size ") + std::to_string(circuit.layers[i].nb_output_vars));
         timer.add_timing("layer " + to_string(i) + " sumcheck layer");
         std::tuple<std::vector<std::vector<F_primitive>>, std::vector<std::vector<F_primitive>>> t
-            = sumcheck_prove_gkr_layer<F, F_primitive>(circuit.layers[i], rz1, rz2, alpha, beta, transcript, scratch_pad, timer, config); 
+            = sumcheck_prove_gkr_layer<F, F_primitive>(circuit.layers[i], rz1, rz2, alpha, beta, transcript, scratch_pad, timer, config);
         timer.report_timing("layer " + to_string(i) + " sumcheck layer");
         alpha = transcript.challenge_f();
         beta = transcript.challenge_f();
