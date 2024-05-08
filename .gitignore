@@ -38,6 +38,7 @@ ff
 keccak_est
 gkr
 keccak_benchmark
+bin/
 
 # circuits
 circuit8.txt
