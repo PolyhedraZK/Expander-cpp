@@ -97,18 +97,16 @@ std::tuple<std::vector<std::vector<F_primitive>>, std::vector<std::vector<F_prim
     }
     for(int j = 0; j < config.get_num_repetitions(); j++)
     {
-        timer.add_timing("  vy_claim time2");
+        timer.add_timing("  vy_claim time");
         transcript.append_f(helper[j].vy_claim());
-        timer.report_timing("  vy_claim time2");
+        timer.report_timing("  vy_claim time");
     }
-    std::cout << "returning" << std::endl;
     std::vector<std::vector<F_primitive>> rz1s, rz2s;
     for(int j = 0; j < config.get_num_repetitions(); j++)
     {
         rz1s.emplace_back(helper[j].rx);
         rz2s.emplace_back(helper[j].ry);
     }
-    std::cout << "returning" << std::endl;
     return {rz1s, rz2s};
 }
 
@@ -128,12 +126,10 @@ std::tuple<bool, std::vector<std::vector<F_primitive>>, std::vector<std::vector<
 {
     uint32 nb_vars = poly.nb_input_vars;
     std::vector<F> sum;
-    std::cout << "sumcheck_verify_gkr_layer1" << std::endl;
     for(int i = 0; i < config.get_num_repetitions(); i++)
     { 
         sum.push_back(claimed_v1[i] * alpha + claimed_v2[i] * beta);
     }
-    std::cout << "sumcheck_verify_gkr_layer2" << std::endl;
     std::vector<std::vector<F_primitive>> rx, ry;
     rx.resize(config.get_num_repetitions());
     ry.resize(config.get_num_repetitions());
@@ -143,7 +139,6 @@ std::tuple<bool, std::vector<std::vector<F_primitive>>, std::vector<std::vector<
     bool verified = true;
     for (uint32 i_var = 0; i_var < (2 * nb_vars); i_var++)
     {
-        std::cout << "sumcheck_verify_gkr_layer3" << std::endl;
         for(int j = 0; j < config.get_num_repetitions(); j++)
         {
             const std::vector<F> low_degree_evals = {proof.get_next_and_step(), proof.get_next_and_step(), proof.get_next_and_step()};
@@ -168,7 +163,6 @@ std::tuple<bool, std::vector<std::vector<F_primitive>>, std::vector<std::vector<
         {
             rs = &ry;
         }
-        std::cout << "sumcheck_verify_gkr_layer4" << std::endl;
     }
     std::vector<F> vy_claim;
     for(int j = 0; j < config.get_num_repetitions(); j++)
@@ -178,7 +172,6 @@ std::tuple<bool, std::vector<std::vector<F_primitive>>, std::vector<std::vector<
         transcript.append_f(vy_claim[j]);
     }
 
-    std::cout << "sumcheck_verify_gkr_layer5" << std::endl;
     return {verified, rx, ry, vx_claim, vy_claim};
 }
 

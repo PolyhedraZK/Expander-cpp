@@ -19,10 +19,6 @@ TEST(MERKLE_TREE_TESTS, MERKLE_TREE_CORRECTNESS)
     {
         leaves.emplace_back(F::random());
     }
-    for(int i = 0; i < leaves.size(); i++)
-    {
-        std::cout << leaves[i].x << std::endl;
-    }
     MerkleTree tree = MerkleTree::build_tree<F>(leaves);
     for (uint32_t i = 0; i < test_size; i++)
     {

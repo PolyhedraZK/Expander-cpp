@@ -62,7 +62,6 @@ std::tuple<std::vector<F>, std::vector<std::vector<F_primitive>>, std::vector<st
         std::tuple<std::vector<std::vector<F_primitive>>, std::vector<std::vector<F_primitive>>> t
             = sumcheck_prove_gkr_layer<F, F_primitive>(circuit.layers[i], rz1, rz2, alpha, beta, transcript, scratch_pad, timer, config); 
         timer.report_timing("layer " + to_string(i) + " sumcheck layer");
-        std::cout << "layer " << i << " done" << std::endl;
         alpha = transcript.challenge_f();
         beta = transcript.challenge_f();
         rz1 = std::get<0>(t);
@@ -70,7 +69,6 @@ std::tuple<std::vector<F>, std::vector<std::vector<F_primitive>>, std::vector<st
         timer.report_timing(string("layer " + to_string(i) + " sumcheck layer input size ") + std::to_string(circuit.layers[i].nb_input_vars) + string(" output size ") + std::to_string(circuit.layers[i].nb_output_vars));
     }
     timer.report_timing("start proof");
-    std::cout << "Proof Generated" << std::endl;
     return {claimed_v, rz1, rz2};
 }
 
