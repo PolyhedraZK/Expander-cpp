@@ -296,7 +296,7 @@ public:
         const Gate<F_primitive, 2>* mul_ptr = mul.sparse_evals.data();
         const F* vals_eval_ptr = vals.evals.data();
         timer.add_timing("          prepare g_x_vals, mul loop2 " + std::to_string(mul_size));
-        for(int i = 0; i < mul_size; i++)
+        for(long unsigned int i = 0; i < mul_size; i++)
         {
             // g(x) += eq(rz, z) * v(y) * coef
             const Gate<F_primitive, 2> &gate = mul_ptr[i];
@@ -314,7 +314,7 @@ public:
 
         timer.add_timing("          prepare g_x_vals, add loop" + std::to_string(add_size));
         const auto add_ptr = add.sparse_evals.data();
-        for(auto i = 0; i < add_size; i++)
+        for(long unsigned int i = 0; i < add_size; i++)
         {
             // g(x) += eq(rz, x) * coef
             const auto &gate = add_ptr[i];

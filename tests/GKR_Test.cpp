@@ -21,6 +21,7 @@ TEST(GKR_TEST, GKR_WITH_PC_TEST)
 
     Config default_config{};
     Prover prover(default_config);
+    prover.prepare_mem(circuit);
     auto t = prover.prove(circuit);
     F claimed_v = std::get<0>(t);
     Proof<F> proof = std::get<1>(t);
@@ -35,7 +36,6 @@ TEST(GKR_TEST, GKR_CORRECTNESS_TEST)
     using namespace gkr;
     using F = gkr::M31_field::VectorizedM31;
     using F_primitive = gkr::M31_field::M31;
-
     uint32 n_layers = 4;
     Circuit<F, F_primitive> circuit;
     for (int i = n_layers - 1; i >= 0; --i)

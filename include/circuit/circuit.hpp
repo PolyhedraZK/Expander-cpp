@@ -188,11 +188,10 @@ public:
         fclose(file);
 
         file = fopen(filename_add, "r");
-        for (int i = 0; i < nb_layers; i++)
+        for (uint32 i = 0; i < nb_layers; i++)
         {
             size_t num_gates = 0;
             fscanf(file, "%lu", &num_gates);
-            CircuitLayer<F, F_primitive>& layer = c.layers[nb_layers - 1 - i];
             SparseCircuitConnection<F_primitive, 1>& add_connect = c.layers[nb_layers - 1 - i].add;
             add_connect.sparse_evals.resize(num_gates);
 
@@ -289,7 +288,7 @@ public:
     {
         std::vector<F> &input_layer_vals = layers[0].input_layer_vals.evals;
         input_layer_vals.clear();
-        for (uint32 i = 0; i < (1 << log_input_size()); i++)
+        for (uint32 i = 0; i < (1UL << log_input_size()); i++)
         {
             input_layer_vals.emplace_back(F::random());
         }

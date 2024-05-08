@@ -39,7 +39,7 @@ public:
         memcpy(input + DIGEST_BYTE_LENGTH, d2.data, DIGEST_BYTE_LENGTH);
         
         Digest output;
-        SHA256(output.data, DIGEST_BYTE_LENGTH * 2, input);
+        SHA256(input, DIGEST_BYTE_LENGTH * 2, output.data);
         
         return output;
     }
@@ -57,15 +57,27 @@ public:
 
         tree_digests.resize(log_size + 1);
         tree_digests[0].reserve(size);
-
+        uint8 bytes[F::byte_length()];
         for (const F& f: input)
         {
-            std::vector<uint8> bytes = f.to_bytes();
-            Digest digest;
-            SHA256(digest.data, bytes.size(), bytes.data());
-            tree_digests[0].emplace_back(digest);
-        }
+            f.to_bytes(bytes);
+            
+            for(uint32 i = 0; i < F::byte_length(); i++)
+            {
+                printf("%02x", bytes[i]);
+            }
+            printf("\n");
 
+            Digest digest;
+            SHA256(bytes, F::byte_length(), digest.data);
+            tree_digests[0].emplace_back(digest);
+            for(uint32 i = 0; i < DIGEST_BYTE_LENGTH; i++)
+            {
+                printf("%02x", digest.data[i]);
+            }
+            printf("\n");
+        }
+        printf("log_size: %d\n", log_size);
         for (uint32 i = 1; i <= log_size; i++)
         {
             uint32 layer_size = size >> i;
@@ -76,6 +88,18 @@ public:
                 tree_digests[i].emplace_back(digest);
             }
             
+        }
+        for(uint32 i = 0; i < tree_digests.size(); i++)
+        {
+            printf("layer %d\n", i);
+            for(uint32 j = 0; j < tree_digests[i].size(); j++)
+            {
+                for(uint32 k = 0; k < DIGEST_BYTE_LENGTH; k++)
+                {
+                    printf("%02x", tree_digests[i][j].data[k]);
+                }
+                printf("\n");
+            }
         }
         
         return tree;
@@ -106,9 +130,21 @@ public:
     template<typename F>
     static bool verify(const Digest& root, uint32 idx, const F& leaf, const Proof& proof) 
     {
-        std::vector<uint8> leaf_bytes = leaf.to_bytes();
+        uint8 leaf_bytes[F::byte_length()];
+        leaf.to_bytes(leaf_bytes);
+        for (uint32 i = 0; i < F::byte_length(); i++)
+        {
+            printf("%02x", leaf_bytes[i]);
+        }
+        printf("\n");
         Digest hash;
-        SHA256(hash.data, leaf_bytes.size(), leaf_bytes.data());
+        SHA256(leaf_bytes, F::byte_length(), hash.data);
+        printf("leaf hash\n");
+        for(uint32 i = 0; i < DIGEST_BYTE_LENGTH; i++)
+        {
+            printf("%02x", hash.data[i]);
+        }
+        printf("\n");
 
         for (uint32 i = 0; i < proof.size(); i++)
         {
@@ -121,6 +157,12 @@ public:
                 hash = two_to_one_hash(proof[i], hash);
             }
             idx >>= 1;
+            printf("hash %d\n", i);
+            for(uint32 j = 0; j < DIGEST_BYTE_LENGTH; j++)
+            {
+                printf("%02x", hash.data[j]);
+            }
+            printf("\n");
         }
         
         return memcmp(hash.data, root.data, DIGEST_BYTE_LENGTH) == 0;
