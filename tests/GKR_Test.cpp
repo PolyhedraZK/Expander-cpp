@@ -21,6 +21,7 @@ TEST(GKR_TEST, GKR_WITH_PC_TEST)
 
     Config default_config{};
     Prover prover(default_config);
+    prover.prepare_mem(circuit);
     auto t = prover.prove(circuit);
     F claimed_v = std::get<0>(t);
     Proof<F> proof = std::get<1>(t);

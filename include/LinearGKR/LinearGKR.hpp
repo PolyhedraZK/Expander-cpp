@@ -35,6 +35,7 @@ class Prover
 {
 public:
     const Config &config;
+    void* pad;
 
 public:
     Prover(const Config &config_): config(config_)
@@ -45,10 +46,18 @@ public:
     }
 
     template<typename F, typename F_primitive>
+    void prepare_mem(const Circuit<F, F_primitive>& circuit)
+    {
+        GKRScratchPad<F, F_primitive>* scratch_pad = new GKRScratchPad<F, F_primitive>;
+        scratch_pad->prepare(circuit);
+        pad = reinterpret_cast<void*>(scratch_pad);
+    }
+
+    template<typename F, typename F_primitive>
     std::tuple<F, Proof<F>> prove(const Circuit<F, F_primitive>& circuit)
     {
-        GKRScratchPad<F, F_primitive> scratch_pad;
-        scratch_pad.prepare(circuit);
+        GKRScratchPad<F, F_primitive> &scratch_pad = 
+            *(reinterpret_cast<GKRScratchPad<F, F_primitive>*>(pad));
 
         // pc commit
         RawPC<F, F_primitive> raw_pc;
