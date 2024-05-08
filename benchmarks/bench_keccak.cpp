@@ -36,7 +36,7 @@ std::pair<float, int> bench_func(int thread_id, Config &local_config)
 {
     auto t0 = std::chrono::high_resolution_clock::now();
     Transcript<F, F_primitive> transcript;
-    F claimed_value = std::get<0>(gkr_prove<F, F_primitive>(circuits[thread_id], scratch_pad[thread_id], transcript, local_config, set_print));
+    F claimed_value = std::get<0>(gkr_prove<F, F_primitive>(circuits[thread_id], scratch_pad[thread_id], transcript, set_print));
     auto t1 = std::chrono::high_resolution_clock::now();
     float proving_time = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
     const int circuit_copy_size = 8;
