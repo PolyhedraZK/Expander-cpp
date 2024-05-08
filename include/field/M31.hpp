@@ -230,7 +230,7 @@ inline std::vector<M31> unpack_field_elements(const std::vector<PackedM31> &pfs)
 #ifdef __ARM_NEON
 const int vectorize_size = 4;
 #else
-const int vectorize_size = 2;
+const int vectorize_size = 1;
 #endif
 
 class VectorizedM31 final : public BaseField<VectorizedM31, Scalar>,
