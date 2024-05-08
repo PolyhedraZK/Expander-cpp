@@ -140,6 +140,8 @@ public:
             proof.step(opening2.size());
             
             RawPC<F, F_primitive> raw_pc;
+            std::cout << rz1[i].size() << std::endl;
+            std::cout << commitment.poly_vals.size() << std::endl;
             verified &= raw_pc.verify(commitment, opening1, rz1[i], claimed_v1[i]);
             verified &= raw_pc.verify(commitment, opening2, rz2[i], claimed_v2[i]);
         }

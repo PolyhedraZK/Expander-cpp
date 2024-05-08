@@ -162,8 +162,11 @@ std::tuple<bool, std::vector<std::vector<F_primitive>>, std::vector<std::vector<
                 vx_claim[j] = proof.get_next_and_step();
                 sum[j] -= vx_claim[j] * eval_sparse_circuit_connect_poly<F, F_primitive, 1>(poly.add, rz1[j], rz2[j], alpha, beta, {rx[j]});
                 transcript.append_f(vx_claim[j]);
-                rs = &ry;
             }
+        }
+        if (i_var == nb_vars - 1)
+        {
+            rs = &ry;
         }
         std::cout << "sumcheck_verify_gkr_layer4" << std::endl;
     }
