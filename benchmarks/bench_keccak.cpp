@@ -22,11 +22,8 @@ Circuit<F, F_primitive> circuits[num_thread];
 void load_circuit(int i)
 {
     circuits[i] = Circuit<F, F_primitive>::load_extracted_gates(filename_mul, filename_add);
-    std::cout << "Number Mul Gate: " << circuits[i].nb_mul_gates() << std::endl;
-    std::cout << "Number Add Gate: " << circuits[i].nb_add_gates() << std::endl;
     circuits[i].set_random_boolean_input();
     circuits[i].evaluate();
-    std::cout << "Circuit Evaluated" << std::endl;
 }
 
 std::pair<float, int> bench_func(int thread_id, Config &local_config)
@@ -57,7 +54,6 @@ int main()
     for (int i = 0; i < num_thread; i++)
     {
         threads.push_back(std::thread([&m, &partial_proofs, &local_config, i](){
-            printf("Thread %d started\n", i);
             while(true) {
                 auto [proving_time, num_proofs] = bench_func(i, local_config);
                 partial_proofs[i] += num_proofs;
@@ -67,17 +63,19 @@ int main()
             }
         }));
     }
+    printf("Circuit loaded!\n");
+    printf("We are now calculating average throughput, please wait for 1 minutes\n");
     while(!debug) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(60000)); // 1 minute per sample
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time).count();
         if (duration == 0) {
             continue;
         }
         int total_proofs = 0;
-	for(int i = 0; i < num_thread; i++)
-		total_proofs += partial_proofs[i];
-	auto throughput = total_proofs / duration;
+        for(int i = 0; i < num_thread; i++)
+            total_proofs += partial_proofs[i];
+        auto throughput = total_proofs / duration;
         std::cout << "Throughput: " << throughput << " keccaks/s" << std::endl;
     }
     for (auto& thread : threads) {

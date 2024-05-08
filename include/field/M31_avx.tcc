@@ -140,8 +140,8 @@ inline PackedM31 PackedM31::operator*(const PackedM31 &rhs) const
 inline PackedM31 PackedM31::operator*(const M31 &_rhs) const
 {
     const __m256i rhs_x = _mm256_set1_epi32(_rhs.x);
-    const __m256i x_shifted = _mm256_srli_epi64(x, 32);                // latency 1, CPI 1
-    const __m256i rhs_x_shifted = _mm256_srli_epi64(rhs_x, 32);        // latency 1, CPI 1
+    const __m256i x_shifted = _mm256_srli_epi64(x, 32);                // latency 1, CPI 0.5
+    const __m256i rhs_x_shifted = _mm256_srli_epi64(rhs_x, 32);        // latency 1, CPI 0.5
     __m256i xa_even = _mm256_mul_epi32(x, rhs_x);                // latency 5, CPI 0.5
     __m256i xa_odd = _mm256_mul_epi32(x_shifted, rhs_x_shifted); // latency 5, CPI 0.5
 
