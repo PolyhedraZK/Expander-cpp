@@ -22,9 +22,9 @@ namespace gkr
 
 
 template<typename F, typename F_primitive>
-std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>> gkr_prove(
+std::tuple<std::vector<F>, std::vector<std::vector<F_primitive>>, std::vector<std::vector<F_primitive>>> gkr_prove(
     const Circuit<F, F_primitive> &circuit, 
-    GKRScratchPad<F, F_primitive> &scratch_pad,
+    GKRScratchPad<F, F_primitive> *scratch_pad,
     Transcript<F, F_primitive> &transcript,
     bool set_print = false
 )
@@ -35,21 +35,30 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>> gkr_prove(
     uint32 n_layers = circuit.layers.size();
     
     timer.add_timing("out_layer multi linear evals");
-    std::vector<F_primitive> rz1, rz2;
+    std::vector<std::vector<F_primitive>> rz1, rz2;
+    rz1.resize(3);
+    rz2.resize(3);
     for (uint32 i = 0; i < circuit.layers.back().nb_output_vars; i++)
     {
-        rz1.emplace_back(transcript.challenge_f());
-        rz2.emplace_back(F_primitive::zero());
+        for(int j = 0; j < 3; j++)
+        {
+            rz1[j].emplace_back(transcript.challenge_f());
+            rz2[j].emplace_back(F_primitive::zero());
+        }
     }
     F_primitive alpha = F_primitive::one(), beta = F_primitive::zero();
-    F claimed_v = eval_multilinear(circuit.layers.back().output_layer_vals.evals, rz1);
+    std::vector<F> claimed_v;
+    for(int j = 0; j < 3; j++)
+    {
+        claimed_v.emplace_back(eval_multilinear(circuit.layers.back().output_layer_vals.evals, rz1[j]));
+    }
     timer.report_timing("out_layer multi linear evals");
 
     for (int i = n_layers - 1; i >= 0; i--)
     {
         timer.add_timing(string("layer " + to_string(i) + " sumcheck layer input size ") + std::to_string(circuit.layers[i].nb_input_vars) + string(" output size ") + std::to_string(circuit.layers[i].nb_output_vars));
         timer.add_timing("layer " + to_string(i) + " sumcheck layer");
-        std::tuple<std::vector<F_primitive>, std::vector<F_primitive>> t 
+        std::tuple<std::vector<std::vector<F_primitive>>, std::vector<std::vector<F_primitive>>> t 
             = sumcheck_prove_gkr_layer<F, F_primitive>(circuit.layers[i], rz1, rz2, alpha, beta, transcript, scratch_pad, timer); 
         timer.set_print(set_print);
         timer.report_timing("layer " + to_string(i) + " sumcheck layer");
@@ -61,7 +70,7 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>> gkr_prove(
         timer.report_timing(string("layer " + to_string(i) + " sumcheck layer input size ") + std::to_string(circuit.layers[i].nb_input_vars) + string(" output size ") + std::to_string(circuit.layers[i].nb_output_vars));
     }
     timer.report_timing("start proof");
-    return {claimed_v, rz1, rz2};
+    return std::make_tuple(claimed_v, rz1, rz2);
 }
 
 template<typename F, typename F_primitive>

@@ -47,13 +47,14 @@ public:
     template<typename F, typename F_primitive>
     std::tuple<F, Proof<F>> prove(const Circuit<F, F_primitive>& circuit)
     {
-        GKRScratchPad<F, F_primitive> scratch_pad;
-        scratch_pad.prepare(circuit);
-
+        GKRScratchPad<F, F_primitive> *scratch_pad = new GKRScratchPad<F, F_primitive>[3];
+        scratch_pad[0].prepare(circuit);
+        scratch_pad[1].prepare(circuit);
+        scratch_pad[2].prepare(circuit);
         // pc commit
         RawPC<F, F_primitive> raw_pc;
         RawCommitment<F> commitment = raw_pc.commit(circuit.layers[0].input_layer_vals.evals);
-        uint8* buffer = (uint8*) scratch_pad.v_evals;
+        uint8* buffer = (uint8*) scratch_pad[0].v_evals; // temporary use the scratch as a buffer
         commitment.to_bytes(buffer);
 
         Transcript<F, F_primitive> transcript;
@@ -77,7 +78,7 @@ public:
         RawOpening opening2 = raw_pc.open(rz2);
         opening2.to_bytes(buffer);
         transcript.append_bytes(buffer, opening2.size());
-        
+        delete[] scratch_pad;
         return {claimed_v, transcript.proof};
     }
 };

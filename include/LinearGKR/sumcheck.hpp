@@ -49,49 +49,63 @@ bool sumcheck_verify_multilinear(
 }
 
 template<typename F, typename F_primitive>
-std::tuple<std::vector<F_primitive>, std::vector<F_primitive>> sumcheck_prove_gkr_layer(
+std::tuple<std::vector<std::vector<F_primitive>>, std::vector<std::vector<F_primitive>>> sumcheck_prove_gkr_layer(
     const CircuitLayer<F, F_primitive>& poly,
-    const std::vector<F_primitive>& rz1,
-    const std::vector<F_primitive>& rz2,
+    const std::vector<std::vector<F_primitive>>& rz1,
+    const std::vector<std::vector<F_primitive>>& rz2,
     const F_primitive& alpha,
     const F_primitive& beta,
     Transcript<F, F_primitive>& transcript,
-    GKRScratchPad<F, F_primitive>& scratch_pad,
+    GKRScratchPad<F, F_primitive> *scratch_pad,
     Timing &timer
 )
 {
-    SumcheckGKRHelper<F, F_primitive> helper;
+    SumcheckGKRHelper<F, F_primitive> helper[3];
     timer.add_timing("    prepare time");
-    helper.prepare(poly, rz1, rz2, alpha, beta, scratch_pad, timer);
+    for(int i = 0; i < 3; i++)
+    {
+        helper[i].prepare(poly, rz1[i], rz2[i], alpha, beta, scratch_pad[i], timer);
+    }
     timer.report_timing("    prepare time");
     for (uint32 i_var = 0; i_var < (2 * poly.nb_input_vars); i_var++)
     {
-        timer.add_timing("    eval poly " + std::to_string(i_var) + " time");
-        std::vector<F> evals = helper.poly_evals_at(i_var, 2, timer);
-        timer.report_timing("    eval poly " + std::to_string(i_var) + " time");
-        timer.add_timing("    append evals " + std::to_string(i_var) + " time");
-        transcript.append_f(evals[0]);
-        transcript.append_f(evals[1]);
-        transcript.append_f(evals[2]);
-        auto r = transcript.challenge_f();
-        timer.report_timing("    append evals " + std::to_string(i_var) + " time");
-
-        timer.add_timing("    receive challenge " + std::to_string(i_var) + " time");
-        helper.receive_challenge(i_var, r);
-        timer.report_timing("    receive challenge " + std::to_string(i_var) + " time");
-
-        if (i_var == poly.nb_input_vars - 1)
+        for (int j = 0; j < 3; j++)
         {
-            timer.add_timing("    vx_claim time");
-            transcript.append_f(helper.vx_claim());
-            timer.report_timing("    vx_claim time");
+            timer.add_timing("    eval poly " + std::to_string(i_var) + " time");
+            std::vector<F> evals = helper[j].poly_evals_at(i_var, 2, timer);
+            timer.report_timing("    eval poly " + std::to_string(i_var) + " time");
+            timer.add_timing("    append evals " + std::to_string(i_var) + " time");
+            transcript.append_f(evals[0]);
+            transcript.append_f(evals[1]);
+            transcript.append_f(evals[2]);
+            auto r = transcript.challenge_f();
+            timer.report_timing("    append evals " + std::to_string(i_var) + " time");
+
+            timer.add_timing("    receive challenge " + std::to_string(i_var) + " time");
+            helper[j].receive_challenge(i_var, r);
+            timer.report_timing("    receive challenge " + std::to_string(i_var) + " time");
+
+            if (i_var == poly.nb_input_vars - 1)
+            {
+                timer.add_timing("    vx_claim time");
+                transcript.append_f(helper[j].vx_claim());
+                timer.report_timing("    vx_claim time");
+            }
         }
     }
-    timer.add_timing("  vy_claim time");
-    transcript.append_f(helper.vy_claim());
-    timer.report_timing("  vy_claim time");
-
-    return {helper.rx, helper.ry};
+    for(int j = 0; j < 3; j++)
+    {
+        timer.add_timing("  vy_claim time");
+        transcript.append_f(helper[j].vy_claim());
+        timer.report_timing("  vy_claim time");
+    }
+    std::vector<std::vector<F_primitive>> rz1s, rz2s;
+    for(int j = 0; j < 3; j++)
+    {
+        rz1s.emplace_back(helper[j].rx);
+        rz2s.emplace_back(helper[j].ry);
+    }
+    return {rz1s, rz2s};
 }
 
 template<typename F, typename F_primitive>
