@@ -68,6 +68,7 @@ If you are running a Mac:
 eval "$(/opt/homebrew/bin/brew shellenv)"
 brew install cmake
 brew install openssl
+brew install wget
 cmake .
 make
 wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
