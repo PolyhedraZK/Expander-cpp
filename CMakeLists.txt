@@ -13,7 +13,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
     set(CMAKE_CXX_FLAGS_RELEASE "-march=native -mavx512f -mavx512vl -faligned-new -flto -Wall -O3")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
     # Compiler flags for ARM architecture, assuming Apple M2
-    set(CMAKE_CXX_FLAGS "-O3 -march=armv8.6-a -mcpu=apple-m2 -flto=auto -ffast-math -fvectorize -fslp-vectorize -funroll-loops -fomit-frame-pointer -fPIC -Wno-unused-variable -Wno-unused-but-set-variable")
+    set(CMAKE_CXX_FLAGS "-O3 -march=armv8.6-a -flto=auto -ffast-math -fvectorize -fslp-vectorize -funroll-loops -fomit-frame-pointer -fPIC -Wno-unused-variable -Wno-unused-but-set-variable")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
     # Compiler flags for ARM architecture
     set(CMAKE_CXX_FLAGS "-O3 -march=armv8.6-a -mcpu=cortex-a76 -flto=auto -ffast-math -fvectorize -fslp-vectorize -funroll-loops -fomit-frame-pointer -fPIC -Wno-unused-variable -Wno-unused-but-set-variable")
