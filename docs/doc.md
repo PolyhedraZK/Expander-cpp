@@ -2,12 +2,12 @@
 This repo implements a gkr-based proving system aiming to prove relations that can be represented by layered arithmetic circuit.
 
 ## Structure
-The major part of the code lies in the 'src' folder, including the definition of field, circuit, transcript, gkr protocol, and polynomial commitment. Details follow:
+The major part of the code lies in the 'include' folder, including the definition of field, circuit, transcript, gkr protocol, and polynomial commitment. Details follow:
 
-- `src/field`. This contains the definition of fields. For now we mainly use *M31*, a prime field with $p=2^{31}-1$ being a mersenne prime. Any field implements the `src/field/basefield.hpp` should work well with the remaining part of the protocol.
-- `src/gkr`. This is the major part of the protocol where we implement the sumcheck and the gkr protocol. 
-- `src/poly_commit`. Here we implements several polynomial commitment scheme including *kzg*, *fri* and *orion*, these PC schemes are mainly used to commit the input of a layered arithmetic circuit to reduce the proof size and the verifier's computation cost.
-- `src/transcript.h`. This is where we define the transcript used to perform fiat-shamir transformation in order to achieve non-interactivity.
+- `include/field`. This contains the definition of fields. For now we mainly use *M31*, a prime field with $p=2^{31}-1$ being a mersenne prime. Any field implements the `src/field/basefield.hpp` should work well with the remaining part of the protocol.
+- `include/LinearGKR`. This is the major part of the protocol where we implement the sumcheck and the gkr protocol. 
+- `include/poly_commit`. Here we implements several polynomial commitment scheme including *kzg*, *fri* and *orion*, these PC schemes are mainly used to commit the input of a layered arithmetic circuit to reduce the proof size and the verifier's computation cost.
+- `include/fiat_shamir`. This is where we define the transcript used to perform fiat-shamir transformation in order to achieve non-interactivity.
 
 ## The GKR Protocol
 The details can be found in the [Libra paper](https://eprint.iacr.org/2019/317.pdf). We give a short description here, presuming the readers are already familiar with the basic GKR protocol. 
