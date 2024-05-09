@@ -6,7 +6,7 @@ Expander is a proof generation backend for Polyhedra Network. It aims to support
 
 This is the "core" repo and more on "demo" purpose, we will continue develop on the repo to support more features.
 
-For more technical introduction, visit other markdown files [here](https://github.com/PolyhedraZK/Expander/tree/master/docs).
+For more technical introduction, visit our markdown files [here](https://github.com/PolyhedraZK/Expander/tree/master/docs).
 
 ## Circuit Compiler
 
