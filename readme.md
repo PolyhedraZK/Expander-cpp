@@ -1,3 +1,5 @@
+![Expander](https://github.com/PolyhedraZK/Expander/data/logo.png)
+
 # Expander
 
 Expander is a proof generation backend for Polyhedra Network. It aims to support fast proof generation.
