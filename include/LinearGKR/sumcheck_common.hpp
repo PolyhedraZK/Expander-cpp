@@ -40,12 +40,11 @@ template<typename F_primitive>
 void _eq_evals_at(const std::vector<F_primitive>& r, const F_primitive& mul_factor, F_primitive* eq_evals, F_primitive* sqrtN1st, F_primitive* sqrtN2nd)
 {
     auto first_half_bits = r.size() / 2;
-    auto second_half_bits = r.size() - first_half_bits;
     auto first_half_mask = (1 << first_half_bits) - 1;
     _eq_evals_at_primitive(std::vector<F_primitive>(r.begin(), r.begin() + first_half_bits), mul_factor, sqrtN1st);
     _eq_evals_at_primitive(std::vector<F_primitive>(r.begin() + first_half_bits, r.end()), F_primitive(1), sqrtN2nd);
 
-    for (uint32 i = 0; i < (1 << r.size()); i++)
+    for (uint32 i = 0; i < (uint32)(1 << r.size()); i++)
     {
         uint32 first_half = i & first_half_mask;
         uint32 second_half = i >> first_half_bits;

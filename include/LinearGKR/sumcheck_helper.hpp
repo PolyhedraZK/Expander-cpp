@@ -91,51 +91,10 @@ public:
                 p1.elements[j] += f_v_1 * hg_v_1;
                 p2.elements[j] += (f_v_0 + f_v_1) * (hg_v_0 + hg_v_1);
                  */
-            #ifdef __ARM_NEON
-                auto added = vaddq_u32(f_v_0.x, f_v_1.x);
-                auto u = vsubq_u32(added, gkr::M31_field::packed_mod);
-                added = vminq_u32(added, u);
-
-                auto added_hg = vaddq_u32(hg_v_0.x, hg_v_1.x);
-                auto u_hg = vsubq_u32(added_hg, gkr::M31_field::packed_mod);
-                added_hg = vminq_u32(added_hg, u_hg);
-                
-
-                auto mul0_hi = vqdmulhq_s32(f_v_0.x, hg_v_0.x);
-                auto mul0_lo = vmulq_u32(f_v_0.x, hg_v_0.x);
-                auto mul1_hi = vqdmulhq_s32(f_v_1.x, hg_v_1.x);
-                auto mul1_lo = vmulq_s32(f_v_1.x, hg_v_1.x);
-                auto mulS_hi = vqdmulhq_s32(added, added_hg);
-                auto mulS_lo = vmulq_s32(added, added_hg);
-
-                auto t0 = vmlsq_u32(mul0_lo, mul0_hi, gkr::M31_field::packed_mod);
-                auto t1 = vmlsq_u32(mul1_lo, mul1_hi, gkr::M31_field::packed_mod);
-                auto t2 = vmlsq_u32(mulS_lo, mulS_hi, gkr::M31_field::packed_mod);
-
-                auto t0_reduced = vsubq_u32(t0, gkr::M31_field::packed_mod);
-                auto t1_reduced = vsubq_u32(t1, gkr::M31_field::packed_mod);
-                auto t2_reduced = vsubq_u32(t2, gkr::M31_field::packed_mod);
-
-                t0_reduced = vminq_u32(t0, t0_reduced);
-                t1_reduced = vminq_u32(t1, t1_reduced);
-                t2_reduced = vminq_u32(t2, t2_reduced);
-
-                auto p0_add = vaddq_u32(p0.elements[j].x, t0_reduced);
-                auto p1_add = vaddq_u32(p1.elements[j].x, t1_reduced);
-                auto pS_add = vaddq_u32(p2.elements[j].x, t2_reduced);
-
-                auto p0_u = vsubq_u32(p0_add, gkr::M31_field::packed_mod);
-                auto p1_u = vsubq_u32(p1_add, gkr::M31_field::packed_mod);
-                auto pS_u = vsubq_u32(pS_add, gkr::M31_field::packed_mod);
-
-                p0.elements[j].x = vminq_u32(p0_add, p0_u);
-                p1.elements[j].x = vminq_u32(p1_add, p1_u);
-                p2.elements[j].x = vminq_u32(pS_add, pS_u);
-            #else
+            
                 p0.elements[j] += f_v_0 * hg_v_0;
                 p1.elements[j] += f_v_1 * hg_v_1;
                 p2.elements[j] += (f_v_0 + f_v_1) * (hg_v_0 + hg_v_1);
-            #endif
             }
         }
         p2 = p1 * F(6) + p0 * F(3) - p2 * F(2);
@@ -153,29 +112,7 @@ public:
                 gate_exists[i] = false;
                 for(uint32 j = 0; j < gkr::M31_field::vectorize_size; j++)
                 {
-                #ifdef __ARM_NEON
-                    auto subf = vsubq_u32(bookkeeping_f[2 * i + 1].elements[j].x, bookkeeping_f[2 * i].elements[j].x);
-                    auto underflow_f = vcltq_s32(bookkeeping_f[2 * i + 1].elements[j].x, bookkeeping_f[2 * i].elements[j].x);
-                    subf = vmlsq_u32(subf, underflow_f, gkr::M31_field::packed_mod);
-
-                    auto mulf_lo = vmulq_n_u32(subf, r.x);
-                    auto mulf_hi = vqdmulhq_n_s32(subf, r.x);
-
-                    auto t_f = vmlsq_u32(mulf_lo, mulf_hi, gkr::M31_field::packed_mod);
-
-                    auto u_f = vsubq_u32(t_f, gkr::M31_field::packed_mod);
-
-                    auto res_mul_f = vminq_u32(t_f, u_f);
-
-
-                    auto addf = vaddq_u32(bookkeeping_f[2 * i].elements[j].x, res_mul_f);
-
-                    auto u_f_add = vsubq_u32(addf, gkr::M31_field::packed_mod);
-
-                    bookkeeping_f[i].elements[j].x = vminq_u32(addf, u_f_add);
-                #else
                     bookkeeping_f[i].elements[j] = src_v[2 * i].elements[j] + (src_v[2 * i + 1].elements[j] - src_v[2 * i].elements[j]) * r;
-                #endif
                 }
                 bookkeeping_hg[i] = 0;
             }
@@ -184,41 +121,8 @@ public:
                 gate_exists[i] = true;
                 for(uint32 j = 0; j < gkr::M31_field::vectorize_size; j++)
                 {
-                #ifdef __ARM_NEON
-                    auto subf = vsubq_u32(bookkeeping_f[2 * i + 1].elements[j].x, bookkeeping_f[2 * i].elements[j].x);
-                    auto underflow_f = vcltq_s32(bookkeeping_f[2 * i + 1].elements[j].x, bookkeeping_f[2 * i].elements[j].x);
-                    auto subhg = vsubq_u32(bookkeeping_hg[2 * i + 1].elements[j].x, bookkeeping_hg[2 * i].elements[j].x);
-                    auto underflow_hg = vcltq_s32(bookkeeping_hg[2 * i + 1].elements[j].x, bookkeeping_hg[2 * i].elements[j].x);
-                    subf = vmlsq_u32(subf, underflow_f, gkr::M31_field::packed_mod);
-                    subhg = vmlsq_u32(subhg, underflow_hg, gkr::M31_field::packed_mod);
-
-                    auto mulf_lo = vmulq_n_u32(subf, r.x);
-                    auto mulf_hi = vqdmulhq_n_s32(subf, r.x);
-                    auto mulh_lo = vmulq_n_u32(subhg, r.x);
-                    auto mulh_hi = vqdmulhq_n_s32(subhg, r.x);
-
-                    auto t_f = vmlsq_u32(mulf_lo, mulf_hi, gkr::M31_field::packed_mod);
-                    auto t_hg = vmlsq_u32(mulh_lo, mulh_hi, gkr::M31_field::packed_mod);
-
-                    auto u_f = vsubq_u32(t_f, gkr::M31_field::packed_mod);
-                    auto u_hg = vsubq_u32(t_hg, gkr::M31_field::packed_mod);
-
-                    auto res_mul_f = vminq_u32(t_f, u_f);
-                    auto res_mul_hg = vminq_u32(t_hg, u_hg);
-
-
-                    auto addf = vaddq_u32(bookkeeping_f[2 * i].elements[j].x, res_mul_f);
-                    auto addhg = vaddq_u32(bookkeeping_hg[2 * i].elements[j].x, res_mul_hg);
-
-                    auto u_f_add = vsubq_u32(addf, gkr::M31_field::packed_mod);
-                    auto u_hg_add = vsubq_u32(addhg, gkr::M31_field::packed_mod);
-
-                    bookkeeping_f[i].elements[j].x = vminq_u32(addf, u_f_add);
-                    bookkeeping_hg[i].elements[j].x = vminq_u32(addhg, u_hg_add);
-                #else
                     bookkeeping_f[i].elements[j] = src_v[2 * i].elements[j] + (src_v[2 * i + 1].elements[j] - src_v[2 * i].elements[j]) * r;
                     bookkeeping_hg[i].elements[j] = bookkeeping_hg[2 * i].elements[j] + (bookkeeping_hg[2 * i + 1].elements[j] - bookkeeping_hg[2 * i].elements[j]) * r;
-                #endif
                 }
             }
             
@@ -296,7 +200,7 @@ public:
         const Gate<F_primitive, 2>* mul_ptr = mul.sparse_evals.data();
         const F* vals_eval_ptr = vals.evals.data();
         timer.add_timing("          prepare g_x_vals, mul loop2 " + std::to_string(mul_size));
-        for(int i = 0; i < mul_size; i++)
+        for(long unsigned int i = 0; i < mul_size; i++)
         {
             // g(x) += eq(rz, z) * v(y) * coef
             const Gate<F_primitive, 2> &gate = mul_ptr[i];
@@ -314,7 +218,7 @@ public:
 
         timer.add_timing("          prepare g_x_vals, add loop" + std::to_string(add_size));
         const auto add_ptr = add.sparse_evals.data();
-        for(auto i = 0; i < add_size; i++)
+        for(long unsigned int i = 0; i < add_size; i++)
         {
             // g(x) += eq(rz, x) * coef
             const auto &gate = add_ptr[i];

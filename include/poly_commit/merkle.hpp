@@ -39,7 +39,7 @@ public:
         memcpy(input + DIGEST_BYTE_LENGTH, d2.data, DIGEST_BYTE_LENGTH);
         
         Digest output;
-        SHA256(output.data, DIGEST_BYTE_LENGTH * 2, input);
+        SHA256(input, DIGEST_BYTE_LENGTH * 2, output.data);
         
         return output;
     }
@@ -57,15 +57,15 @@ public:
 
         tree_digests.resize(log_size + 1);
         tree_digests[0].reserve(size);
-
+        uint8 bytes[F::byte_length()];
         for (const F& f: input)
         {
-            std::vector<uint8> bytes = f.to_bytes();
+            f.to_bytes(bytes);
+
             Digest digest;
-            SHA256(digest.data, bytes.size(), bytes.data());
+            SHA256(bytes, F::byte_length(), digest.data);
             tree_digests[0].emplace_back(digest);
         }
-
         for (uint32 i = 1; i <= log_size; i++)
         {
             uint32 layer_size = size >> i;
@@ -106,9 +106,10 @@ public:
     template<typename F>
     static bool verify(const Digest& root, uint32 idx, const F& leaf, const Proof& proof) 
     {
-        std::vector<uint8> leaf_bytes = leaf.to_bytes();
+        uint8 leaf_bytes[F::byte_length()];
+        leaf.to_bytes(leaf_bytes);
         Digest hash;
-        SHA256(hash.data, leaf_bytes.size(), leaf_bytes.data());
+        SHA256(leaf_bytes, F::byte_length(), hash.data);
 
         for (uint32 i = 0; i < proof.size(); i++)
         {
