@@ -19,8 +19,8 @@ const char* filename_mul = "data/ExtractedCircuitMul.txt";
 const char* filename_add = "data/ExtractedCircuitAdd.txt"; 
 // returns the proving time and number of keccaks proved
 
-const int num_thread = debug ? 1 : 16;
-Circuit<F, F_primitive> circuits[num_thread];
+int num_thread;
+Circuit<F, F_primitive> *circuits;
 
 void load_circuit(int i)
 {
@@ -41,12 +41,37 @@ std::pair<float, int> bench_func(int thread_id, Config &local_config)
     return std::make_pair(proving_time, gkr::M31_field::PackedM31::pack_size() * gkr::M31_field::vectorize_size * circuit_copy_size);
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (!debug)
+    {        
+        if (argc <= 1)
+        {
+            num_thread = 4;
+            std::cout << "Use ./keccak_benchmark number_of_threads. Default to 4." << std::endl;        
+        }
+        else 
+        {
+            num_thread = atoi(argv[1]);
+            if (num_thread == 0)
+            {
+                std::cout << "Argumemt #1 number_of_threads is incorrect." << std::endl;
+                return 1;
+            }
+        }
+    }
+    else 
+    {
+        num_thread = 1;
+    }
+    std::cout << "Benchmarking with " << num_thread << " threads" << std::endl;
+
+    circuits = new Circuit<F, F_primitive>[num_thread];
+
     Config local_config;
     printf("Default parallel repetition config %d\n", local_config.get_num_repetitions());
     std::vector<std::thread> threads(num_thread);
-    int partial_proofs[num_thread];
+    int *partial_proofs = new int[num_thread];
     memset(partial_proofs, 0, sizeof(partial_proofs));
     auto start_time = std::chrono::high_resolution_clock::now();
     std::mutex m;
@@ -84,5 +109,9 @@ int main()
     for (auto& thread : threads) {
         thread.join();
     }
+
+    delete[] circuits;
+    delete[] partial_proofs;
+
     return 0;
 }
