@@ -1,10 +1,12 @@
+![Expander](https://github.com/PolyhedraZK/Expander/blob/master/data/logo.jpg)
+
 # Expander
 
 Expander is a proof generation backend for Polyhedra Network. It aims to support fast proof generation.
 
 This is the "core" repo and more on "demo" purpose, we will continue develop on the repo to support more features.
 
-For more technical introduction, visit other markdown files [here](https://github.com/PolyhedraZK/Expander/tree/main/docs).
+For more technical introduction, visit our markdown files [here](https://github.com/PolyhedraZK/Expander/tree/master/docs).
 
 ## Circuit Compiler
 
@@ -18,8 +20,8 @@ Stay tuned, we will open-source our circuit compiler in the incoming month.
 
 ### Polynomial commitments:
 - [x] RAW
-- [x] KZG
-- [x] FRI
+- [ ] KZG
+- [ ] FRI
 - [x] Orion
 - [ ] Bi-Variate KZG
 
@@ -48,24 +50,54 @@ We highly recommend you to use Clang as your default compiler to compile the cod
 
 ## Environment Setup
 
+Before executing setup, please make sure you read through the system requirements, and make sure your CPU is in the list.
+
+If you are running a Linux:
+
 ```sh
-sudo ./scripts/setup.sh
+sudo apt update
+sudo apt install cmake g++ libssl-dev
+cmake .
+make
+wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
+```
+
+If you are running a Mac:
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+(echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+brew install cmake
+brew install openssl
+brew install wget
+cmake .
+make
+wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
 ```
 
 ## Benchmarks
 
-Build command:
+We ran our benchmarks on M3 Max and AMD 7950X3D, where M3 Max can reach 4500 keccak/s and 7950X3D can reach 4700 keccak/s. To run the compiled code, simply do following:
 
+Command template:
 ```sh
-mkdir bin
-cmake .
-make keccak_benchmark
+./bin/keccak_benchmark NUMBER_OF_THREAD
 ```
 
-Run command:
+Concretely if you are running on a 16 physical core CPU:
 ```sh
-./bin/keccak_benchmark
+./bin/keccak_benchmark 16
 ```
+
+## FAQ
+
+### Illegal instruction (core dumped)
+It indicates your CPU is not supported, please check the supported CPU list above. We might support older CPU if there is a demand.
+
+
+### Benchmark method
+We run the program for 5 minutes and take average of the results.
 
 ## How to contribute?
 
