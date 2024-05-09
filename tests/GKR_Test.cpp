@@ -15,7 +15,7 @@ TEST(GKR_TEST, GKR_WITH_PC_TEST)
     Circuit<F, F_primitive> circuit;
     for (int i = n_layers - 1; i >= 0; --i)
     {
-        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(1 << i, 1 << (i + 1)));
+        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2));
     }
     circuit.evaluate();
 
