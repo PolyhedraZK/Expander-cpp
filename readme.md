@@ -20,8 +20,8 @@ Stay tuned, we will open-source our circuit compiler in the incoming month.
 
 ### Polynomial commitments:
 - [x] RAW
-- [x] KZG
-- [x] FRI
+- [ ] KZG
+- [ ] FRI
 - [x] Orion
 - [ ] Bi-Variate KZG
 
