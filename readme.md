@@ -115,6 +115,9 @@ We welcome your pull requests (PRs) and ask that you follow these guidelines to 
   4. **Push your changes** to your fork and then **submit a pull request** to the main repository.
 
 - **PR Types and Specific Guidelines**:
+  - **[DOWNSTREAM]** for downstream changes from public repo to private repo:
+    - **Title**: Start with [DOWNSTREAM] followed by a brief description
+    - **Content**: Explain why these changes needed to be downstream from public repo.
   - **[BUG]** for bug fixes:
     - **Title**: Start with `[BUG]` followed by a brief description.
     - **Content**: Explain the issue being fixed, steps to reproduce, and the impact of the bug. Include any relevant error logs or screenshots.
