@@ -69,7 +69,7 @@ int main()
     printf("Circuit loaded!\n");
     printf("We are now calculating average throughput, please wait for 1 minutes\n");
     while(!debug) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // 1 minute per sample
+        std::this_thread::sleep_for(std::chrono::milliseconds(60000)); // 1 minute per sample
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time).count();
         if (duration == 0) {
