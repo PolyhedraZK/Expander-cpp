@@ -48,19 +48,34 @@ We highly recommend you to use Clang as your default compiler to compile the cod
 
 ## Environment Setup
 
+Before executing setup, please make sure you read through the system requirements, and make sure your CPU is in the list.
+
+If you are running a Linux:
+
 ```sh
-sudo ./scripts/setup.sh
+sudo apt update
+sudo apt install cmake g++ libssl-dev
+cmake .
+make
+wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
+```
+
+If you are running a Mac:
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+(echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+brew install cmake
+brew install openssl
+cmake .
+make
+wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
 ```
 
 ## Benchmarks
 
-Build command:
-
-```sh
-mkdir bin
-cmake .
-make keccak_benchmark
-```
+We ran our benchmarks on M3 Max and AMD 7950X3D, where M3 Max can reach 4500 keccak/s and 7950X3D can reach 4700 keccak/s. To run the compiled code, simply do following:
 
 Run command:
 ```sh
