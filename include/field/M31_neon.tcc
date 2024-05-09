@@ -150,8 +150,8 @@ PackedM31 PackedM31::operator-(const PackedM31 &rhs) const
 {
     PackedM31 r;
     auto diff = vsubq_s32(x, rhs.x);
-    auto underflow = vcltq_s32(x, rhs.x);
-    r.x = vmlsq_u32(diff, underflow, packed_mod);
+    auto u = vaddq_u32(diff, packed_mod);
+    r.x = vminq_u32(diff, u);
     return r;
 }
 

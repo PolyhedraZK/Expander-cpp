@@ -4,7 +4,10 @@
 #include <utility>
 #include <unistd.h>
 #include <mutex>
-#include "configuration/config.hpp"
+#include <string.h>
+#include <stdio.h>
+#include <sched.h>
+
 using namespace gkr;
 using F = gkr::M31_field::VectorizedM31;
 using F_primitive = gkr::M31_field::M31;
@@ -42,7 +45,7 @@ int main()
 {
     Config local_config;
     printf("Default parallel repetition config %d\n", local_config.get_num_repetitions());
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(num_thread);
     int partial_proofs[num_thread];
     memset(partial_proofs, 0, sizeof(partial_proofs));
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -53,7 +56,7 @@ int main()
     }
     for (int i = 0; i < num_thread; i++)
     {
-        threads.push_back(std::thread([&m, &partial_proofs, &local_config, i](){
+        threads[i] = std::thread([&m, &partial_proofs, &local_config, i](){
             while(true) {
                 auto [proving_time, num_proofs] = bench_func(i, local_config);
                 partial_proofs[i] += num_proofs;
@@ -61,12 +64,12 @@ int main()
                     break;
                 }
             }
-        }));
+        });
     }
     printf("Circuit loaded!\n");
     printf("We are now calculating average throughput, please wait for 1 minutes\n");
     while(!debug) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(60000)); // 1 minute per sample
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // 1 minute per sample
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time).count();
         if (duration == 0) {

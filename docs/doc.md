@@ -57,6 +57,3 @@ In gkr reduction, a random value $\tilde{v}_{i+1}(rz)$ is reduced to two claims 
 
 ## Polynomial Commitment
 We offer several choices of polynomial commitment to be used to commit the input layer of the circuit including *kzg, fri, Orion*. In general, they should have *setup, commit, open, verify* interfaces.
-
-## Assembly Optimization for x86 and arm
-TODO.
