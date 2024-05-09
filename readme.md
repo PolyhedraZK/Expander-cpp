@@ -80,9 +80,14 @@ wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
 
 We ran our benchmarks on M3 Max and AMD 7950X3D, where M3 Max can reach 4500 keccak/s and 7950X3D can reach 4700 keccak/s. To run the compiled code, simply do following:
 
-Run command:
+Command template:
 ```sh
-./bin/keccak_benchmark
+./bin/keccak_benchmark NUMBER_OF_THREAD
+```
+
+Concretely if you are running on a 16 physical core CPU:
+```sh
+./bin/keccak_benchmark 16
 ```
 
 ## FAQ

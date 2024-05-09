@@ -64,8 +64,6 @@ public:
             num_repetitions++;
         }
 
-
-
         if (PC_type == KZG)
         {
             assert(field_size == BN254);
