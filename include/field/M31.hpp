@@ -44,7 +44,7 @@ public:
     static M31 zero() { return new_unchecked(0); }
     static M31 one() { return new_unchecked(1); }
     static std::tuple<Scalar, uint32> size() { return {mod, 2}; }
-    static M31 random() { return {static_cast<uint32>(rand())}; }  // FIXME: random cannot be used in production
+    static M31 random() { return M31{static_cast<uint32>(rand())}; }  // FIXME: random cannot be used in production
 
     static inline M31 new_unchecked(uint32 x)
     {
@@ -103,6 +103,10 @@ public:
     {
         memcpy(output, this, sizeof(*this));
     };
+    static int byte_length()
+    {
+        return 4;
+    }
 
     void from_bytes(const uint8* input)
     {
@@ -228,9 +232,9 @@ inline std::vector<M31> unpack_field_elements(const std::vector<PackedM31> &pfs)
 }
 
 #ifdef __ARM_NEON
-const int vectorize_size = 4;
-#else
 const int vectorize_size = 2;
+#else
+const int vectorize_size = 1;
 #endif
 
 class VectorizedM31 final : public BaseField<VectorizedM31, Scalar>,
