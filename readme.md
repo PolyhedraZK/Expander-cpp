@@ -118,6 +118,7 @@ We welcome your pull requests (PRs) and ask that you follow these guidelines to 
   - **[DOWNSTREAM]** for downstream changes from public repo to private repo:
     - **Title**: Start with [DOWNSTREAM] followed by a brief description
     - **Content**: Explain why these changes needed to be downstream from public repo.
+    - **Tests**: Any tests that shows these downstream changes are safe to merge.
   - **[BUG]** for bug fixes:
     - **Title**: Start with `[BUG]` followed by a brief description.
     - **Content**: Explain the issue being fixed, steps to reproduce, and the impact of the bug. Include any relevant error logs or screenshots.
