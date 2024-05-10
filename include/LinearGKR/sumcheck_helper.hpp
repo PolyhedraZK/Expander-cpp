@@ -79,10 +79,10 @@ public:
             {
                 continue;
             }
-            const F &f_v_0 = src_v[i * 2];
-            const F &f_v_1 = src_v[i * 2 + 1];
-            const F &hg_v_0 = bookkeeping_hg[i * 2];
-            const F &hg_v_1 = bookkeeping_hg[i * 2 + 1];
+            F f_v_0 = src_v[i * 2];
+            F f_v_1 = src_v[i * 2 + 1];
+            F hg_v_0 = bookkeeping_hg[i * 2];
+            F hg_v_1 = bookkeeping_hg[i * 2 + 1];
 
             p0 += f_v_0 * hg_v_0;
             p1 += f_v_1 * hg_v_1;
