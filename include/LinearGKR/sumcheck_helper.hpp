@@ -79,23 +79,14 @@ public:
             {
                 continue;
             }
-            for(int j = 0; j < gkr::M31_field::vectorize_size; j++)
-            {
-                auto f_v_0 = src_v[i * 2].elements[j];
-                auto f_v_1 = src_v[i * 2 + 1].elements[j];
-                auto hg_v_0 = bookkeeping_hg[i * 2].elements[j];
-                auto hg_v_1 = bookkeeping_hg[i * 2 + 1].elements[j];
-                /*
-                 * Following intrinsics is the same as:
-                p0.elements[j] += f_v_0 * hg_v_0;
-                p1.elements[j] += f_v_1 * hg_v_1;
-                p2.elements[j] += (f_v_0 + f_v_1) * (hg_v_0 + hg_v_1);
-                 */
-            
-                p0.elements[j] += f_v_0 * hg_v_0;
-                p1.elements[j] += f_v_1 * hg_v_1;
-                p2.elements[j] += (f_v_0 + f_v_1) * (hg_v_0 + hg_v_1);
-            }
+            const F &f_v_0 = src_v[i * 2];
+            const F &f_v_1 = src_v[i * 2 + 1];
+            const F &hg_v_0 = bookkeeping_hg[i * 2];
+            const F &hg_v_1 = bookkeeping_hg[i * 2 + 1];
+
+            p0 += f_v_0 * hg_v_0;
+            p1 += f_v_1 * hg_v_1;
+            p2 += (f_v_0 + f_v_1) * (hg_v_0 + hg_v_1);
         }
         p2 = p1 * F(6) + p0 * F(3) - p2 * F(2);
         return {p0, p1, p2};
@@ -110,20 +101,14 @@ public:
             if (!gate_exists[i * 2] && !gate_exists[i * 2 + 1])
             {
                 gate_exists[i] = false;
-                for(uint32 j = 0; j < gkr::M31_field::vectorize_size; j++)
-                {
-                    bookkeeping_f[i].elements[j] = src_v[2 * i].elements[j] + (src_v[2 * i + 1].elements[j] - src_v[2 * i].elements[j]) * r;
-                }
+                bookkeeping_f[i] = src_v[2 * i] + (src_v[2 * i + 1] - src_v[2 * i]) * r;
                 bookkeeping_hg[i] = 0;
             }
             else
             {
                 gate_exists[i] = true;
-                for(uint32 j = 0; j < gkr::M31_field::vectorize_size; j++)
-                {
-                    bookkeeping_f[i].elements[j] = src_v[2 * i].elements[j] + (src_v[2 * i + 1].elements[j] - src_v[2 * i].elements[j]) * r;
-                    bookkeeping_hg[i].elements[j] = bookkeeping_hg[2 * i].elements[j] + (bookkeeping_hg[2 * i + 1].elements[j] - bookkeeping_hg[2 * i].elements[j]) * r;
-                }
+                bookkeeping_f[i] = src_v[2 * i] + (src_v[2 * i + 1] - src_v[2 * i]) * r;
+                bookkeeping_hg[i] = bookkeeping_hg[2 * i] + (bookkeeping_hg[2 * i + 1] - bookkeeping_hg[2 * i]) * r;
             }
             
         }
