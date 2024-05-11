@@ -6,19 +6,27 @@ Expander is a proof generation backend for Polyhedra Network. It aims to support
 
 This is the "core" repo and more on "demo" purpose, we will continue develop on the repo to support more features.
 
-For more technical introduction, visit our markdown files [here](https://github.com/PolyhedraZK/Expander/tree/master/docs).
+For more technical introduction, visit our markdown files [here](https://github.com/PolyhedraZK/Expander/tree/master/docs/doc.md).
+
+And [here](https://github.com/PolyhedraZK/Expander/tree/master/docs/example.md) for an example on how to use the gkr lib.
 
 ## Circuit Compiler
 
 Stay tuned, we will open-source our circuit compiler in the incoming month.
 
+## Orion PCS
+
+[Here](https://github.com/PolyhedraZK/Expander/tree/master/lib/Orion) provides a C++ implmenetation of [Orion](https://eprint.iacr.org/2022/1010.pdf) polynomial commitment, that can be coupled with other proof systems like (Virgo/Ligero/Hyrax/Spartan...) to achieve linear time zero-knowledge proofs.
+
 ## Roadmap
 
 ### Fields:
+
 - [x] Mersenne31
 - [x] BN254
 
 ### Polynomial commitments:
+
 - [x] RAW
 - [ ] KZG
 - [ ] FRI
@@ -26,18 +34,22 @@ Stay tuned, we will open-source our circuit compiler in the incoming month.
 - [ ] Bi-Variate KZG
 
 ### Hashes
+
 - [x] Keccak256
 - [ ] Poseidon
 - [ ] SHA256
 
 ### Features
+
 - [x] Data parallel circuit
 - [ ] Dynamic circuit (what is this? We will let you know later.)
 - [ ] Lookup
-- [ ] In-circuit random number 
+- [ ] In-circuit random number
 
 ## System requirements
+
 We requires latest CPU to run our experiments, following are currently supported CPU families:
+
 1. ARM CPU with NEON support, example: Apple M series.
 2. Intel: Knights Landing, Knights Mill, Skylake-SP/X, Cannon Lake, Cascade Lake, Cooper Lake, Ice Lake, Tiger Lake, Alder Lake, Sapphire Rapids.
 3. AMD: Zen 4/5.
@@ -81,11 +93,13 @@ wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
 We ran our benchmarks on M3 Max and AMD 7950X3D, where M3 Max can reach 4500 keccak/s and 7950X3D can reach 4700 keccak/s. To run the compiled code, simply do following:
 
 Command template:
+
 ```sh
 ./bin/keccak_benchmark NUMBER_OF_THREAD
 ```
 
 Concretely if you are running on a 16 physical core CPU:
+
 ```sh
 ./bin/keccak_benchmark 16
 ```
@@ -93,10 +107,11 @@ Concretely if you are running on a 16 physical core CPU:
 ## FAQ
 
 ### Illegal instruction (core dumped)
+
 It indicates your CPU is not supported, please check the supported CPU list above. We might support older CPU if there is a demand.
 
-
 ### Benchmark method
+
 We run the program for 5 minutes and take average of the results.
 
 ## How to contribute?
@@ -106,9 +121,11 @@ Thank you for your interest in contributing to our project! We seek contributors
 ### Contribution Guidelines:
 
 #### Pull Requests
+
 We welcome your pull requests (PRs) and ask that you follow these guidelines to facilitate the review process:
 
 - **General Procedure**:
+
   1. **Fork the repository** and clone it locally.
   2. **Create a branch** for your changes related to a specific issue or improvement.
   3. **Commit your changes**: Use clear and meaningful commit messages.
@@ -136,6 +153,7 @@ We welcome your pull requests (PRs) and ask that you follow these guidelines to 
     - **Tests/Benchmarks**: Add tests that cover the new feature's functionality, and benchmarks to prove your improvement.
 
 #### Review Process
+
 Each pull request will undergo a review by one or more core contributors. We may ask for changes to better align with the project's goals and standards. Once approved, a maintainer will merge the PR.
 
 We value your contributions greatly and are excited to see what you bring to this project. Let’s build something great together!
