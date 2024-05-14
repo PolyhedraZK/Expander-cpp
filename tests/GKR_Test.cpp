@@ -17,7 +17,6 @@ TEST(GKR_TEST, GKR_WITH_PC_TEST)
     {
         circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2));
     }
-    circuit.evaluate();
 
     Config default_config{};
     Prover<F, F_primitive> prover(default_config);
@@ -43,7 +42,7 @@ TEST(GKR_TEST, GKR_SAME_FIELD_TEST)
     {
         circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2));
     }
-    circuit.evaluate();
+    circuit.set_random_input();
 
     Config default_config{};
     Prover<F, F_primitive> prover(default_config);

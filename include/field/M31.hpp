@@ -405,6 +405,16 @@ public:
         return r;
     }
 
+    inline VectorizedM31 operator-(const M31 &rhs) const
+    {
+        VectorizedM31 result;
+        for (int i = 0; i < vectorize_size; i++)
+        {
+            result.elements[i] = elements[i] - PackedM31::pack_full(rhs);
+        }
+        return result;
+    }
+
     bool operator==(const VectorizedM31 &rhs) const
     {
         for (int i = 0; i < vectorize_size; i++)

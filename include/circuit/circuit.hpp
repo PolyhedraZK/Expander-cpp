@@ -1,8 +1,10 @@
 #pragma once
 
 #include "poly_commit/poly.hpp"
-#include "../utils/types.hpp"
-#include "../utils/myutil.hpp"
+#include "utils/types.hpp"
+#include "utils/myutil.hpp"
+#include "fiat_shamir/transcript.hpp"
+
 #include "circuit_raw.hpp"
 #include <iostream>
 #include <fstream>
@@ -74,6 +76,7 @@ public:
     MultiLinearPoly<F> input_layer_vals;
     MultiLinearPoly<F> output_layer_vals;
 
+    SparseCircuitConnection<F_primitive, 0> rnd;
     SparseCircuitConnection<F_primitive, 1> add;
     SparseCircuitConnection<F_primitive, 2> mul;
 
@@ -84,24 +87,30 @@ public:
         poly.nb_input_vars = nb_input_vars;
         poly.input_layer_vals = MultiLinearPoly<F>::random(nb_input_vars);
 
-        poly.mul = SparseCircuitConnection<F_primitive, 2>::random(nb_output_vars, nb_input_vars);
-        poly.add = SparseCircuitConnection<F_primitive, 1>::random(nb_output_vars, nb_input_vars); 
+        poly.rnd = SparseCircuitConnection<F_primitive, 0>::random(nb_output_vars, nb_input_vars);
+        poly.add = SparseCircuitConnection<F_primitive, 1>::random(nb_output_vars, nb_input_vars);
+        poly.mul = SparseCircuitConnection<F_primitive, 2>::random(nb_output_vars, nb_input_vars); 
         return poly;
     }
 
-    std::vector<F> evaluate() const
+    void evaluate(std::vector<F> &output) const
     {
-        std::vector<F> output(1 << nb_output_vars, F::zero());
-        for (const Gate<F_primitive, 2>& gate: mul.sparse_evals)
+        output.clear();
+        output.resize(1 << nb_output_vars, F::zero());
+        for (const Gate<F_primitive, 2> &gate: mul.sparse_evals)
         {
             output[gate.o_id] += input_layer_vals.evals[gate.i_ids[0]] * input_layer_vals.evals[gate.i_ids[1]] * gate.coef;
         }
 
-        for (const Gate<F_primitive, 1>& gate: add.sparse_evals)
+        for (const Gate<F_primitive, 1> &gate: add.sparse_evals)
         {
             output[gate.o_id] += input_layer_vals.evals[gate.i_ids[0]] * gate.coef;
         }
-        return output;
+
+        for (const Gate<F_primitive, 0> &gate: rnd.sparse_evals)
+        {
+            output[gate.o_id] = output[gate.o_id] + gate.coef;
+        }
     }
 
     uint32 nb_mul_gates() const
@@ -112,6 +121,19 @@ public:
     uint32 nb_add_gates() const
     {
         return add.sparse_evals.size();
+    }
+
+    uint32 nb_rnd_gates() const
+    {
+        return rnd.sparse_evals.size();
+    }
+
+    void fill_rnd_gate(Transcript<F, F_primitive> &transcript) 
+    {
+        for (Gate<F_primitive, 0>& gate: rnd.sparse_evals)
+        {
+            gate.coef = transcript.challenge_f();
+        }
     }
 };
 
@@ -270,13 +292,31 @@ public:
         return sum;
     }
 
+    uint32 nb_rnd_gates() const
+    {
+        uint32 sum = 0;
+        for (const CircuitLayer<F, F_primitive>& layer: layers)
+        {
+            sum += layer.nb_rnd_gates();
+        }
+        return sum;
+    }
+
     void evaluate()
     {
         for (uint32 i = 0; i < layers.size() - 1; ++i)
         {
-            layers[i + 1].input_layer_vals.evals = layers[i].evaluate();
+            layers[i].evaluate(layers[i + 1].input_layer_vals.evals);
         }
-        layers.back().output_layer_vals.evals = layers.back().evaluate();
+        layers.back().evaluate(layers.back().output_layer_vals.evals);
+    }
+
+    void fill_rnd_gate(Transcript<F, F_primitive> &transcript)
+    {
+        for (CircuitLayer<F, F_primitive> &layer : layers)
+        {
+            layer.fill_rnd_gate(transcript);
+        }
     }
 
     uint32 log_input_size() const
@@ -293,6 +333,7 @@ public:
             input_layer_vals.emplace_back(F::random());
         }
     }
+
     void set_random_boolean_input()
     {
         std::vector<F> &input_layer_vals = layers[0].input_layer_vals.evals;

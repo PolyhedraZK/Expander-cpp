@@ -128,7 +128,9 @@ std::tuple<bool, std::vector<std::vector<F_primitive>>, std::vector<std::vector<
     std::vector<F> sum;
     for(int i = 0; i < config.get_num_repetitions(); i++)
     { 
-        sum.push_back(claimed_v1[i] * alpha + claimed_v2[i] * beta);
+        F combined_v = claimed_v1[i] * alpha + claimed_v2[i] * beta;
+        combined_v = combined_v - eval_sparse_circuit_connect_poly(poly.rnd, rz1[i], rz2[i], alpha, beta, std::vector<std::vector<F_primitive>>{});
+        sum.push_back(combined_v);
     }
     std::vector<std::vector<F_primitive>> rx, ry;
     rx.resize(config.get_num_repetitions());
@@ -155,7 +157,7 @@ std::tuple<bool, std::vector<std::vector<F_primitive>>, std::vector<std::vector<
             if (i_var == nb_vars - 1)
             {
                 vx_claim[j] = proof.get_next_and_step();
-                sum[j] -= vx_claim[j] * eval_sparse_circuit_connect_poly<F, F_primitive, 1>(poly.add, rz1[j], rz2[j], alpha, beta, {rx[j]});
+                sum[j] -= vx_claim[j] * eval_sparse_circuit_connect_poly(poly.add, rz1[j], rz2[j], alpha, beta, {rx[j]});
                 transcript.append_f(vx_claim[j]);
             }
         }
@@ -168,7 +170,7 @@ std::tuple<bool, std::vector<std::vector<F_primitive>>, std::vector<std::vector<
     for(int j = 0; j < config.get_num_repetitions(); j++)
     {
         vy_claim.push_back(proof.get_next_and_step());
-        verified &= sum[j] == vx_claim[j] * vy_claim[j] * eval_sparse_circuit_connect_poly<F, F_primitive, 2>(poly.mul, rz1[j], rz2[j], alpha, beta, {rx[j], ry[j]});
+        verified &= sum[j] == vx_claim[j] * vy_claim[j] * eval_sparse_circuit_connect_poly(poly.mul, rz1[j], rz2[j], alpha, beta, {rx[j], ry[j]});
         transcript.append_f(vy_claim[j]);
     }
 
