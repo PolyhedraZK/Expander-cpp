@@ -129,7 +129,7 @@ std::tuple<bool, std::vector<std::vector<F_primitive>>, std::vector<std::vector<
     for(int i = 0; i < config.get_num_repetitions(); i++)
     { 
         F combined_v = claimed_v1[i] * alpha + claimed_v2[i] * beta;
-        combined_v = combined_v - eval_sparse_circuit_connect_poly(poly.rnd, rz1[i], rz2[i], alpha, beta, std::vector<std::vector<F_primitive>>{});
+        combined_v = combined_v - eval_sparse_circuit_connect_poly(poly.cst, rz1[i], rz2[i], alpha, beta, std::vector<std::vector<F_primitive>>{});
         sum.push_back(combined_v);
     }
     std::vector<std::vector<F_primitive>> rx, ry;

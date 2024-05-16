@@ -15,8 +15,9 @@ TEST(GKR_TEST, GKR_WITH_PC_TEST)
     Circuit<F, F_primitive> circuit;
     for (int i = n_layers - 1; i >= 0; --i)
     {
-        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2));
+        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2, true));
     }
+    circuit._extract_rnd_gates();
 
     Config default_config{};
     Prover<F, F_primitive> prover(default_config);
@@ -40,8 +41,9 @@ TEST(GKR_TEST, GKR_SAME_FIELD_TEST)
     Circuit<F, F_primitive> circuit;
     for (int i = n_layers - 1; i >= 0; --i)
     {
-        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2));
+        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2, true));
     }
+    circuit._extract_rnd_gates();
     circuit.set_random_input();
 
     Config default_config{};
@@ -66,7 +68,7 @@ TEST(GKR_TEST, GKR_CORRECTNESS_TEST)
     Circuit<F, F_primitive> circuit;
     for (int i = n_layers - 1; i >= 0; --i)
     {
-        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2));
+        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2, false));
     }
     circuit.evaluate();
 

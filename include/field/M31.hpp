@@ -103,6 +103,7 @@ public:
     {
         memcpy(output, this, sizeof(*this));
     };
+
     static int byte_length()
     {
         return 4;
@@ -138,6 +139,11 @@ public:
     {
         // FIXME: is this a reasonable value?
         return new_unchecked(4294967295 - 1);
+    }
+
+    inline bool is_valid() const
+    {
+        return x < ((uint32) mod);
     }
 };
 

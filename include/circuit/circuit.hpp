@@ -39,7 +39,7 @@ public:
     uint32 nb_input_vars;
     std::vector<Gate<F, nb_input>> sparse_evals; 
 
-    static SparseCircuitConnection random(uint32 nb_output_vars, uint32 nb_input_vars)
+    static SparseCircuitConnection random(uint32 nb_output_vars, uint32 nb_input_vars, bool enable_rnd_coef=false)
     {
         SparseCircuitConnection poly;
         poly.nb_input_vars = nb_input_vars;
@@ -59,8 +59,19 @@ public:
                 i_gate = i_gate + output_size;
             }
 
+            F coef;
+            if (enable_rnd_coef && rand() % 10 == 0)
+            {
+                // random gate, the value will be filled only after protocol starts
+                coef = F::default_rand_sentinel();
+            }
+            else 
+            {
+                coef = F::random();
+            }
+
             poly.sparse_evals.emplace_back(
-                Gate<F, nb_input> (o_gate, i_gates, F::one())
+                Gate<F, nb_input> (o_gate, i_gates, coef)
             );
         }
         return poly;
@@ -76,20 +87,20 @@ public:
     MultiLinearPoly<F> input_layer_vals;
     MultiLinearPoly<F> output_layer_vals;
 
-    SparseCircuitConnection<F_primitive, 0> rnd;
+    SparseCircuitConnection<F_primitive, 0> cst;
     SparseCircuitConnection<F_primitive, 1> add;
     SparseCircuitConnection<F_primitive, 2> mul;
 
-    static CircuitLayer random(uint32 nb_output_vars, uint32 nb_input_vars)
+    static CircuitLayer random(uint32 nb_output_vars, uint32 nb_input_vars, bool enable_rnd_coef=false)
     {
         CircuitLayer poly;
         poly.nb_output_vars = nb_output_vars;
         poly.nb_input_vars = nb_input_vars;
         poly.input_layer_vals = MultiLinearPoly<F>::random(nb_input_vars);
 
-        poly.rnd = SparseCircuitConnection<F_primitive, 0>::random(nb_output_vars, nb_input_vars);
-        poly.add = SparseCircuitConnection<F_primitive, 1>::random(nb_output_vars, nb_input_vars);
-        poly.mul = SparseCircuitConnection<F_primitive, 2>::random(nb_output_vars, nb_input_vars); 
+        poly.cst = SparseCircuitConnection<F_primitive, 0>::random(nb_output_vars, nb_input_vars, enable_rnd_coef);
+        poly.add = SparseCircuitConnection<F_primitive, 1>::random(nb_output_vars, nb_input_vars, enable_rnd_coef);
+        poly.mul = SparseCircuitConnection<F_primitive, 2>::random(nb_output_vars, nb_input_vars, enable_rnd_coef); 
         return poly;
     }
 
@@ -107,7 +118,7 @@ public:
             output[gate.o_id] += input_layer_vals.evals[gate.i_ids[0]] * gate.coef;
         }
 
-        for (const Gate<F_primitive, 0> &gate: rnd.sparse_evals)
+        for (const Gate<F_primitive, 0> &gate: cst.sparse_evals)
         {
             output[gate.o_id] = output[gate.o_id] + gate.coef;
         }
@@ -123,24 +134,18 @@ public:
         return add.sparse_evals.size();
     }
 
-    uint32 nb_rnd_gates() const
+    uint32 nb_cst_gates() const
     {
-        return rnd.sparse_evals.size();
+        return cst.sparse_evals.size();
     }
 
-    void fill_rnd_gate(Transcript<F, F_primitive> &transcript) 
-    {
-        for (Gate<F_primitive, 0>& gate: rnd.sparse_evals)
-        {
-            gate.coef = transcript.challenge_f();
-        }
-    }
 };
 
 template<typename F, typename F_primitive>
 class Circuit
 {
 public:
+    std::vector<F_primitive*> rnd_coefs;
     std::vector<CircuitLayer<F, F_primitive>> layers;
 
     void _compute_nb_vars()
@@ -167,6 +172,38 @@ public:
             layer.nb_input_vars = max_i_gate_id > 0 ? __builtin_ctz(next_pow_of_2(max_i_gate_id)) : 0;
             layer.nb_output_vars = max_o_gate_id > 0 ? __builtin_ctz(next_pow_of_2(max_o_gate_id)) : 0;
             layer.input_layer_vals.nb_vars = layer.nb_input_vars;
+        }
+    }
+
+    void _extract_rnd_gates()
+    {
+        rnd_coefs.clear();
+
+        for (auto &layer: layers)
+        {
+            for (auto &gate: layer.mul.sparse_evals)
+            {
+                if (!gate.coef.is_valid())
+                {
+                    rnd_coefs.emplace_back(&gate.coef);
+                }
+            }
+
+            for (auto &gate: layer.add.sparse_evals)
+            {
+                if (!gate.coef.is_valid())
+                {
+                    rnd_coefs.emplace_back(&gate.coef);
+                }
+            }
+
+            for (auto &gate: layer.cst.sparse_evals)
+            {
+                if (!gate.coef.is_valid())
+                {
+                    rnd_coefs.emplace_back(&gate.coef);
+                }
+            }
         }
     }
 
@@ -266,9 +303,18 @@ public:
                 gate_add.coef = gate_add_raw.coef;
                 layer.add.sparse_evals.emplace_back(gate_add);
             }
+
+            for (const auto &gate_cst_raw: layer_raw.leaf_gate_consts(circuit_raw, leaves))
+            {
+                Gate<F_primitive, 0> gate_cst;
+                gate_cst.o_id = gate_cst_raw.out;
+                gate_cst.coef = gate_cst_raw.coef;
+                layer.cst.sparse_evals.emplace_back(gate_cst);
+            }
         }
 
         circuit._compute_nb_vars();
+        circuit._extract_rnd_gates();
         return circuit;
     }
 
@@ -292,12 +338,12 @@ public:
         return sum;
     }
 
-    uint32 nb_rnd_gates() const
+    uint32 nb_cst_gates() const
     {
         uint32 sum = 0;
         for (const CircuitLayer<F, F_primitive>& layer: layers)
         {
-            sum += layer.nb_rnd_gates();
+            sum += layer.nb_cst_gates();
         }
         return sum;
     }
@@ -313,10 +359,16 @@ public:
 
     void fill_rnd_gate(Transcript<F, F_primitive> &transcript)
     {
-        for (CircuitLayer<F, F_primitive> &layer : layers)
+        // uint32 nb_rnd_coefs = rnd_coefs.size();
+        // uint32 byte_size = nb_rnd_coefs * F::byte_length();
+        // uint8* buffer = (uint8*) malloc(byte_size);
+        // uint8* buffer_head = buffer;
+
+        for (F_primitive* &rnd_ptr: rnd_coefs)
         {
-            layer.fill_rnd_gate(transcript);
+            *rnd_ptr = transcript.challenge_f();
         }
+        // free(buffer);
     }
 
     uint32 log_input_size() const
