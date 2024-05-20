@@ -19,9 +19,9 @@ namespace gkr
         // addition and multiplication identity
         static F zero();
         static F one();
+        inline static F inv_2() { return F::INV_2; }
         static std::tuple<Scalar, uint32> size();
         static F random();
-        inline static F inv_2() { return F::INV_2; }
 
         // intepret bytes as a large number n in little endian, and compute n mod p as a field element
         // WARNING: somewhat inefficient, for now this is only used in mimc initialization
@@ -45,7 +45,7 @@ namespace gkr
         F operator-(const F &rhs) const;
 
         bool operator==(const F &rhs) const;
-        bool operator!=(const F&rhs) {return !(*this == rhs);}
+        bool operator!=(const F &rhs) {return !(*this == rhs);}
 
         void operator+=(const F &rhs) { *static_cast<F *>(this) = *static_cast<F *>(this) + rhs; }
         void operator-=(const F &rhs) { *static_cast<F *>(this) = *static_cast<F *>(this) - rhs; }
