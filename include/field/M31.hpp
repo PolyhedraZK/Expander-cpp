@@ -103,6 +103,7 @@ public:
     {
         memcpy(output, this, sizeof(*this));
     };
+
     static int byte_length()
     {
         return 4;
@@ -138,6 +139,11 @@ public:
     {
         // FIXME: is this a reasonable value?
         return new_unchecked(4294967295 - 1);
+    }
+
+    inline bool is_valid() const
+    {
+        return x < ((uint32) mod);
     }
 };
 
@@ -403,6 +409,16 @@ public:
             r.elements[i] = elements[i] - rhs.elements[i];
         }
         return r;
+    }
+
+    inline VectorizedM31 operator-(const M31 &rhs) const
+    {
+        VectorizedM31 result;
+        for (int i = 0; i < vectorize_size; i++)
+        {
+            result.elements[i] = elements[i] - PackedM31::pack_full(rhs);
+        }
+        return result;
     }
 
     bool operator==(const VectorizedM31 &rhs) const

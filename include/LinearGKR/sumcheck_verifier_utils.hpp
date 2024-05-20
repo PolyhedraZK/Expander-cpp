@@ -19,7 +19,7 @@ F degree_2_eval(const std::vector<F>& vals, const F_primitive& x)
 
 // eval alpha add(rz1, rx) + beta add(rz2, rx)
 // or alpha mul(rz1, rx, ry) + beta mul(rz2, rx, ry)
-template<typename F, typename F_primitive, uint32 nb_input>
+template<typename F_primitive, uint32 nb_input>
 F_primitive eval_sparse_circuit_connect_poly(
     const SparseCircuitConnection<F_primitive, nb_input>& poly,
     const std::vector<F_primitive>& rz1,

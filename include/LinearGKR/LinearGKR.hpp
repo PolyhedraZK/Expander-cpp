@@ -55,7 +55,7 @@ public:
         }
     }
 
-    std::tuple<std::vector<F>, Proof<F>> prove(const Circuit<F, F_primitive>& circuit)
+    std::tuple<std::vector<F>, Proof<F>> prove(Circuit<F, F_primitive>& circuit)
     {
         // pc commit
         RawPC<F, F_primitive> raw_pc;
@@ -65,8 +65,13 @@ public:
         Transcript<F, F_primitive> transcript;
         transcript.append_bytes(buffer, commitment.size());
 
-        //grinding
+        // grinding
         grind(transcript, config);
+
+        // rnd gate
+        circuit.fill_rnd_gate(transcript);
+        circuit.evaluate();
+
         // gkr
         auto t = gkr_prove<F, F_primitive>(circuit, scratch_pad, transcript, config);
         
@@ -102,7 +107,7 @@ public:
     }
 
     template<typename F, typename F_primitive>
-    bool verify(const Circuit<F, F_primitive>& circuit, const std::vector<F>& claimed_v, Proof<F>& proof)
+    bool verify(Circuit<F, F_primitive>& circuit, const std::vector<F>& claimed_v, Proof<F>& proof)
     {
         GKRScratchPad<F, F_primitive> scratch_pad;
         scratch_pad.prepare(circuit);
@@ -119,6 +124,9 @@ public:
         grind(transcript, config);
 
         proof.step(commitment.size() + 256/8);
+
+        // rnd gate
+        circuit.fill_rnd_gate(transcript);
 
         // gkr
         auto t = gkr_verify<F, F_primitive>(circuit, claimed_v, transcript, proof, config);
