@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.10)
 project(benchmarks)
 set(CMAKE_CXX_STANDARD 20)
 
+include_directories(/opt/homebrew/lib)
+include_directories(/opt/homebrew/include)
+include_directories(/usr/local/lib)
+include_directories(/usr/local/include)
+include_directories(../lib)
 include_directories(../include)
 include_directories(../lib/btc_sha256)
 
