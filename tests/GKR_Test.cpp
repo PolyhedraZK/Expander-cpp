@@ -65,6 +65,8 @@ TEST(GKR_TEST, GKR_BN254_TEST)
     using F = gkr::bn254fr::BN254_Fr;
     using F_primitive = gkr::bn254fr::BN254_Fr;
 
+    bn254fr::init();
+
     uint32 n_layers = 4;
     Circuit<F, F_primitive> circuit;
     for (int i = n_layers - 1; i >= 0; --i)
@@ -74,8 +76,7 @@ TEST(GKR_TEST, GKR_BN254_TEST)
     circuit.evaluate();
 
     Config default_config{};
-    default_config.field_type = BN254;
-    default_config.field_size = 254;
+    default_config.set_field(BN254);
 
     Prover<F, F_primitive> prover(default_config);
     prover.prepare_mem(circuit);

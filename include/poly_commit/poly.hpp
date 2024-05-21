@@ -85,23 +85,23 @@ public:
     }
 };
 
-template<typename F, typename F_primitive>
-F eval_multilinear(const std::vector<F>& evals, const std::vector<F_primitive>& x)
+template<typename F>
+class BivariatePoly
 {
-    assert((1UL << x.size()) == evals.size());
-    std::vector<F> scratch = evals;
+public:
+    uint32 deg_u, deg_v;
+    std::vector<F> *evals;
 
-    uint32 cur_eval_size = evals.size() >> 1;
-    for (const F_primitive& r: x)
+    BivariatePoly()
     {
-        for (uint32 i = 0; i < cur_eval_size; i++)
-        {
-            scratch[i] = scratch[(i << 1)] + (scratch[(i << 1) + 1] - scratch[(i << 1)]) * r;
-        }
-        cur_eval_size >>= 1;
-    }  
-    return scratch[0];
-}
+    }
+
+    BivariatePoly(uint32 deg_u_, uint32 deg_v_)
+    {
+        deg_u = deg_u_;
+        deg_v = deg_v_;
+    }
+};
 
 template<typename F>
 class MultiLinearPoly
@@ -122,6 +122,24 @@ public:
         return poly;
     }
 };
+
+template<typename F, typename F_primitive>
+F eval_multilinear(const std::vector<F>& evals, const std::vector<F_primitive>& x)
+{
+    assert((1UL << x.size()) == evals.size());
+    std::vector<F> scratch = evals;
+
+    uint32 cur_eval_size = evals.size() >> 1;
+    for (const F_primitive& r: x)
+    {
+        for (uint32 i = 0; i < cur_eval_size; i++)
+        {
+            scratch[i] = scratch[(i << 1)] + (scratch[(i << 1) + 1] - scratch[(i << 1)]) * r;
+        }
+        cur_eval_size >>= 1;
+    }  
+    return scratch[0];
+}
 
 } // namespace LinearGKR
 

@@ -36,6 +36,8 @@ class M31 final : public BaseField<M31, Scalar>,
                                 public FFTFriendlyField<M31>
 {
 public:
+    typedef M31_field::Scalar Scalar;
+
     static M31 INV_2;
 
     uint32 x;
@@ -151,6 +153,8 @@ class PackedM31 final : public BaseField<PackedM31, Scalar>,
                         public FFTFriendlyField<PackedM31>
 {
 public:
+    typedef M31_field::Scalar Scalar;
+
     static PackedM31 INV_2;
 
     DATA_TYPE x;
@@ -241,6 +245,7 @@ class VectorizedM31 final : public BaseField<VectorizedM31, Scalar>,
                                         public FFTFriendlyField<VectorizedM31>
 {
     public:
+    typedef M31_field::Scalar Scalar;
     typedef M31 primitive_type;
     PackedM31 elements[vectorize_size];
 

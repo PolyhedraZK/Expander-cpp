@@ -100,7 +100,7 @@ namespace gkr
     {
     public:
         // return the primitive_root_of_unity and its order
-        static std::tuple<F, uint32> max_order_primitive_root_of_unity();
+        static std::tuple<F, uint32> two_adic_root_of_unity();
     };
 }
 
