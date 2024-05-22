@@ -30,7 +30,7 @@ PackedM31 PackedM31::random()
     uint32_t rand_vector[4];
     for (int i = 0; i < 4; i++)
     {
-        rand_vector[i] = rand();
+        rand_vector[i] = rand() % mod;
     }
     x = vld1q_u32(rand_vector);
     return new_unchecked(x);
