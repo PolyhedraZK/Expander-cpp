@@ -90,6 +90,7 @@ class BivariatePoly
 {
 public:
     uint32 deg_u, deg_v;
+    bool is_reference = true;
     const std::vector<F> *evals;
 
     BivariatePoly()
@@ -104,12 +105,22 @@ public:
 
     void set_evals(const std::vector<F> &evals_)
     {
+        is_reference = false;
         evals = new std::vector<F>{evals_};
     }
 
     void set_evals_by_reference(const std::vector<F> &evals_)
     {
+        is_reference = true;
         evals = &evals_;
+    }
+
+    ~BivariatePoly()
+    {
+        if (!is_reference)
+        {
+            delete evals;
+        }
     }
 };
 
