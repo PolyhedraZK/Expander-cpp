@@ -13,5 +13,4 @@ cd /tmp
 git clone https://github.com/herumi/mcl
 cd mcl
 make -j4
-cp lib/libmcl.a /usr/lib/
-cp -r include/* /usr/include/
+make install
