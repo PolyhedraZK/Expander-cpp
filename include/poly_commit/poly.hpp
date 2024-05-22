@@ -90,7 +90,7 @@ class BivariatePoly
 {
 public:
     uint32 deg_u, deg_v;
-    std::vector<F> *evals;
+    const std::vector<F> *evals;
 
     BivariatePoly()
     {
@@ -100,6 +100,16 @@ public:
     {
         deg_u = deg_u_;
         deg_v = deg_v_;
+    }
+
+    void set_evals(const std::vector<F> &evals_)
+    {
+        evals = new std::vector<F>{evals_};
+    }
+
+    void set_evals_by_reference(const std::vector<F> &evals_)
+    {
+        evals = &evals_;
     }
 };
 
