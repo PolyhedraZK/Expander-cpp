@@ -1,7 +1,6 @@
 #pragma once
 
 #include "circuit/circuit.hpp"
-#include "field/M31.hpp"
 #include "configuration/config.hpp"
 #include "gkr.hpp"
 #include "poly_commit/raw.hpp"
@@ -41,7 +40,6 @@ public:
 public:
     Prover(const Config &config_): config(config_)
     {
-        assert(config.field_type == Field_type::M31);
         assert(config.FS_hash == FiatShamir_hash_type::SHA256);
         assert(config.PC_type == Polynomial_commitment_type::Raw);
     }

@@ -31,7 +31,7 @@ add_executable(gkr GKR_Test.cpp)
 add_executable(transcript transcript.cpp)
 
 # links
-target_link_libraries(ff gtest_main gtest pthread)
+target_link_libraries(ff gtest_main gtest pthread mcl gmp)
 # target_link_libraries(mimc gtest_main gtest pthread XKCP OpenSSL::Crypto)
 # target_link_libraries(orion_pc gtest_main gtest pthread orion)
 # target_link_libraries(fft gtest_main gtest pthread gmp gmpxx libff.a libzm.a)
@@ -40,7 +40,7 @@ target_link_libraries(ff gtest_main gtest pthread)
 target_link_libraries(merkle_tree gtest_main gtest pthread OpenSSL::Crypto)
 # target_link_libraries(fri gtest_main gtest pthread libff.a libzm.a gmp gmpxx XKCP)
 target_link_libraries(sumcheck gtest_main gtest pthread OpenSSL::Crypto btc_sha256)
-target_link_libraries(gkr gtest_main gtest pthread OpenSSL::Crypto btc_sha256)
+target_link_libraries(gkr gtest_main gtest pthread btc_sha256 mcl gmp)
 target_link_libraries(transcript gtest_main gtest pthread OpenSSL::Crypto btc_sha256)
 
 

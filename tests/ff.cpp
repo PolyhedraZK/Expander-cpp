@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include "field/M31.hpp"
+#include "field/bn254_fr.hpp"
 
 template <typename F>
 void test_field_op()
@@ -60,6 +61,15 @@ TEST(FF_TESTS, PACKED_MERSEN_EXT_SERIALIZE_TESTS)
 {
     srand(189);
     using F = gkr::M31_field::VectorizedM31;
+    test_serialization<F>();
+}
+
+TEST(FF_TESTS, BN254_TESTS)
+{
+    srand(456);
+    using F = gkr::bn254fr::BN254_Fr;
+
+    test_field_op<F>();
     test_serialization<F>();
 }
 
