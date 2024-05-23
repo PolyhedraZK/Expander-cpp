@@ -69,7 +69,7 @@ If you are running a Linux:
 ```sh
 sudo apt update
 sudo apt install cmake g++ libssl-dev
-cmake .
+cmake . -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release
 make
 wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
 ```
