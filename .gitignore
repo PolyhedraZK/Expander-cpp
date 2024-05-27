@@ -12,6 +12,8 @@ cmake-build-debug
 cmake-build-release
 Makefile
 *.a
+*.so
+*.so*
 
 # related projects
 gkr-compiler

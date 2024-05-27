@@ -4,13 +4,23 @@
 cmake_minimum_required(VERSION 3.16)
 project(librapp)
 
+# include MCL
+include(FetchContent)
+FetchContent_Declare(
+        mcl
+        # Specify the commit you depend on and update it regularly.
+        URL https://github.com/herumi/mcl/archive/refs/tags/v1.92.zip
+	DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(mcl)
+
 set(CMAKE_CXX_STANDARD 20)
 # Check the system processor and set compiler flags based on the architecture
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
     # Compiler flags for x86-64
-    set(CMAKE_CXX_FLAGS "-march=native -mavx512f -mavx512vl -faligned-new -flto -Wall -O3")
-    set(CMAKE_CXX_FLAGS_DEBUG "-march=native -mavx512f -mavx512vl -faligned-new -flto -Wall -g -O0")
-    set(CMAKE_CXX_FLAGS_RELEASE "-march=native -mavx512f -mavx512vl -faligned-new -flto -Wall -O3")
+    set(CMAKE_CXX_FLAGS "-march=native -faligned-new -flto -Wall -O3")
+    set(CMAKE_CXX_FLAGS_DEBUG "-march=native -faligned-new -flto -Wall -g -O0")
+    set(CMAKE_CXX_FLAGS_RELEASE "-march=native -faligned-new -flto -Wall -O3")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
     # Compiler flags for ARM architecture, assuming Apple M2
     set(CMAKE_CXX_FLAGS "-O3 -march=armv8.6-a -flto=auto -ffast-math -fvectorize -fslp-vectorize -funroll-loops -fomit-frame-pointer -fPIC -Wno-unused-variable -Wno-unused-but-set-variable")
