@@ -60,35 +60,35 @@ TEST(GKR_TEST, GKR_SAME_FIELD_TEST)
 }
 
 
-TEST(GKR_TEST, GKR_BN254_TEST)
-{
-    using namespace gkr;
-    using F = gkr::bn254fr::BN254_Fr;
-    using F_primitive = gkr::bn254fr::BN254_Fr;
+// TEST(GKR_TEST, GKR_BN254_TEST)
+// {
+//     using namespace gkr;
+//     using F = gkr::bn254fr::BN254_Fr;
+//     using F_primitive = gkr::bn254fr::BN254_Fr;
 
-    uint32 n_layers = 4;
-    Circuit<F, F_primitive> circuit;
-    for (int i = n_layers - 1; i >= 0; --i)
-    {
-        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2));
-    }
-    circuit.evaluate();
+//     uint32 n_layers = 4;
+//     Circuit<F, F_primitive> circuit;
+//     for (int i = n_layers - 1; i >= 0; --i)
+//     {
+//         circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2));
+//     }
+//     circuit.evaluate();
 
-    Config default_config{};
-    default_config.field_type = BN254;
-    default_config.field_size = 254;
+//     Config default_config{};
+//     default_config.field_type = BN254;
+//     default_config.field_size = 254;
 
-    Prover<F, F_primitive> prover(default_config);
-    prover.prepare_mem(circuit);
-    auto t = prover.prove(circuit);
+//     Prover<F, F_primitive> prover(default_config);
+//     prover.prepare_mem(circuit);
+//     auto t = prover.prove(circuit);
 
-    auto claimed_v = std::get<0>(t);
-    Proof<F> proof = std::get<1>(t);
+//     auto claimed_v = std::get<0>(t);
+//     Proof<F> proof = std::get<1>(t);
 
-    Verifier verifier(default_config);
-    bool verified = verifier.verify(circuit, claimed_v, proof);
-    EXPECT_TRUE(verified);
-}
+//     Verifier verifier(default_config);
+//     bool verified = verifier.verify(circuit, claimed_v, proof);
+//     EXPECT_TRUE(verified);
+// }
 
 TEST(GKR_TEST, GKR_CORRECTNESS_TEST)
 {

@@ -8,7 +8,6 @@ const __m256i packed_mod = _mm256_set1_epi32(mod);
 const __m256i packed_0 = _mm256_set1_epi32(0);
 const __m256i packed_mod_epi64 = _mm256_set1_epi64x(mod);
 const __m256i packed_mod_square = _mm256_set1_epi64x(mod * static_cast<int64>(mod));
-const __m512i packed_mod_512 = _mm512_set1_epi64(mod);
 
 #define mod_reduce(x) (x) = _mm256_add_epi64(_mm256_and_si256((x), packed_mod_epi64), _mm256_srli_epi64((x), 31));
 #define mod_reduce_epi32(x) (x) = _mm256_add_epi32(_mm256_and_si256((x), packed_mod), _mm256_srli_epi32((x), 31));
@@ -49,7 +48,7 @@ PackedM31 PackedM31::random()
                                     rand(), rand(), rand(), rand());
                                     
     mod_reduce_epi32(x);
-    x = _mm256_mask_sub_epi32(x, _mm256_cmpge_epu32_mask(x, packed_mod), x, packed_mod);
+    mod_reduce_epi32(x);
     return new_unchecked(x);
 }
 
@@ -63,7 +62,7 @@ void PackedM31::from_bytes(const uint8 *input)
 {
     memcpy(this, input, sizeof(*this));
     mod_reduce_epi32(x);
-    x = _mm256_mask_sub_epi32(x, _mm256_cmpge_epu32_mask(x, packed_mod), x, packed_mod);
+    mod_reduce_epi32(x);
 }
 
 PackedM31 PackedM31::new_unchecked(const __m256i &x)
@@ -98,7 +97,8 @@ inline PackedM31 PackedM31::operator+(const PackedM31 &rhs) const
 {
     PackedM31 result;
     result.x = _mm256_add_epi32(x, rhs.x);
-    result.x = _mm256_mask_sub_epi32(result.x, _mm256_cmpge_epu32_mask(result.x, packed_mod), result.x, packed_mod);
+    auto subx = _mm256_sub_epi32(result.x, packed_mod);
+    result.x = _mm256_min_epu32(result.x, subx);
     return result;
 }
 
@@ -157,7 +157,9 @@ inline PackedM31 PackedM31::operator*(const M31 &_rhs) const
 inline PackedM31 PackedM31::operator-() const
 {
     PackedM31 r;
-    r.x = _mm256_mask_sub_epi32(r.x, _mm256_cmpneq_epu32_mask(x, packed_0), packed_mod, x);
+    auto subx = _mm256_sub_epi32(packed_mod, x);
+    auto zero_cmp = _mm256_cmpeq_epi32(x, packed_0);
+    r.x = _mm256_andnot_si256(zero_cmp, subx);
     return r;
 }
 
@@ -165,14 +167,16 @@ inline PackedM31 PackedM31::operator-(const PackedM31 &rhs) const
 {
     PackedM31 result;
     result.x = _mm256_sub_epi32(x, rhs.x);
-    result.x = _mm256_mask_add_epi32(result.x, _mm256_cmpge_epu32_mask(result.x, packed_mod), result.x, packed_mod);
+    auto subx = _mm256_add_epi32(result.x, packed_mod);
+    result.x = _mm256_min_epu32(result.x, subx);
     return result;
 }
 
 inline void PackedM31::operator+=(const PackedM31 &rhs)
 {
     x = _mm256_add_epi32(x, rhs.x);
-    x = _mm256_mask_sub_epi32(x, _mm256_cmpge_epu32_mask(x, packed_mod), x, packed_mod);   
+    auto subx = _mm256_sub_epi32(x, packed_mod);
+    x = _mm256_min_epu32(x, subx);
 }
 
 bool PackedM31::operator==(const PackedM31 &rhs) const
