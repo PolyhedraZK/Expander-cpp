@@ -38,6 +38,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include_directories(include)
 include_directories(lib)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+        include_directories(/opt/homebrew/include /usr/local/include)
+        link_directories(/opt/homebrew/lib /usr/local/lib)
+        find_library(GMP_LIBRARY gmp PATHS /opt/homebrew/lib)
+        find_library(MCL_LIBRARY mcl PATHS /usr/local/lib)
+endif()
 
 # add_subdirectory(src)
 # we're not using Orion as a pure lib, it includes some of the code in the src folder actually
