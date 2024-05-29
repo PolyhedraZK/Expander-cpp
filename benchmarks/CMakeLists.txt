@@ -17,9 +17,5 @@ add_executable(mcl_benchmark bench_mcl.cpp)
 
 target_link_libraries(keccak_benchmark pthread btc_sha256)
 target_link_libraries(transcript_benchmark pthread btc_sha256)
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-	target_link_libraries(mcl_benchmark ${GMP_LIBRARY} ${MCL_LIBRARY})
-else()
-	target_link_libraries(mcl_benchmark gmp mcl)
-endif()
+target_link_libraries(mcl_benchmark gmp mcl)
 
