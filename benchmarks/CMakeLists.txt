@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
 	include_directories(/opt/homebrew/include /usr/local/include)
 	link_directories(/opt/homebrew/lib /usr/local/lib)
-	find_library(GMP_LIBRARY gmp PATHS /opt/homebrew/lib)
-	find_library(MCL_LIBRARY mcl PATHS /usr/local/lib)
 endif()
 
 include_directories(../lib)
