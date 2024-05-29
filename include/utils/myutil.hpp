@@ -30,12 +30,12 @@ void report_timing(string event_name, bool is_start)
 namespace gkr 
 {
 
-bool is_pow_2(uint32 n)
+bool is_pow_2(uint32_t n)
 {
     return (n & (n - 1)) == 0;
 }
 
-uint32 next_pow_of_2(uint32 n)
+uint32_t next_pow_of_2(uint32_t n)
 {
     if (n == 0 || is_pow_2(n))
     {
@@ -43,8 +43,14 @@ uint32 next_pow_of_2(uint32 n)
     }
     else 
     {
-        return ((uint32) 1) << (32 - __builtin_clz(n));
+        return ((uint32_t) 1) << (32 - __builtin_clz(n));
     }
+}
+
+uint32_t log_2(uint32_t n)
+{
+    assert(is_pow_2(n));
+    return __builtin_ctz(n);
 }
 
 }

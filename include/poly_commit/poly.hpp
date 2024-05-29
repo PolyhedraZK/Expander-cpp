@@ -91,7 +91,7 @@ class BivariatePoly
 public:
     uint32 deg_u, deg_v;
     bool is_reference = true;
-    const std::vector<F> *evals;
+    std::vector<F> *evals;
 
     BivariatePoly()
     {
@@ -101,6 +101,17 @@ public:
     {
         deg_u = deg_u_;
         deg_v = deg_v_;
+    }
+
+    void random_init()
+    {
+        is_reference = false;
+        evals = new std::vector<F>;
+        evals->resize(deg_u * deg_v);
+        for (F &x: *evals)
+        {
+            x = F::random();
+        }
     }
 
     void set_evals(const std::vector<F> &evals_)
@@ -113,6 +124,11 @@ public:
     {
         is_reference = true;
         evals = &evals_;
+    }
+
+    inline const F& get_evals(uint32 idx) const
+    {
+        return evals->operator[](idx);
     }
 
     ~BivariatePoly()

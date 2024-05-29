@@ -138,3 +138,31 @@ BN254_Fr BN254_Fr::TWO_ADIC_ROOT_OF_UNITY = [](){
 uint32 BN254_Fr::TWO_ADICITY = 28;
 
 } // namespace gkr::bn254fr
+
+namespace gkr
+{
+
+using namespace mcl::bn;
+
+const G1 G1_ONE = [](){
+    G1 x; 
+    x.set(1, 2); 
+    assert(x.isValid());
+    return x;
+}();
+
+const G2 G2_ONE = [](){
+    G2 x; 
+    Fp2 xx, yy;
+    xx.a.setStr("10857046999023057135944570762232829481370756359578518086990519993285655852781", 10);    
+    xx.b.setStr("11559732032986387107991004021392285783925812861821192530917403151452391805634", 10);
+    yy.a.setStr("8495653923123431417604973247489272438418190587263600148770280649306958101930", 10);
+    yy.b.setStr("4082367875863433681332203403145435568316851327593401208105741076214120093531", 10);
+    x.set(xx, yy);
+    assert(x.isValid());
+    return x;
+}();
+
+const GT GT_ONE  = [](){GT x; x.setOne(); return x;}();
+
+}
