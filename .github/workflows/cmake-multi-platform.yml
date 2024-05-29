@@ -52,6 +52,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
+        
         cmake .
 
     - name: Build
