@@ -2,11 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 project(benchmarks)
 set(CMAKE_CXX_STANDARD 20)
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-	include_directories(/opt/homebrew/include /usr/local/include)
-	link_directories(/opt/homebrew/lib /usr/local/lib)
-endif()
-
 include_directories(../lib)
 include_directories(../include)
 include_directories(../lib/btc_sha256)
