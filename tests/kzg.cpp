@@ -38,11 +38,9 @@ TEST(KZG_TESTS, BI_KZG_TEST)
 
     bn254fr::init();
 
-    uint32 deg = 8;
+    uint32 deg = 4;
     BivariatePoly<F> poly{deg, deg};
     poly.random_init();
-    std::cout << poly.deg_u << " " << poly.deg_v << std::endl;
-    std::cout << poly.evals->size() << std::endl;
     F x = F::random(), y = F::random();
 
     BiKZG bi_kzg;
@@ -54,6 +52,7 @@ TEST(KZG_TESTS, BI_KZG_TEST)
 
     BiKZGOpening opening;
     bi_kzg.open(opening, poly, x, y, setup);
+    std::cout << opening.v.mcl_data << std::endl;
 
     bool verified = bi_kzg.verify(setup, commitment, x, y, opening);    
     EXPECT_TRUE(verified);

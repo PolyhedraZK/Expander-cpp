@@ -144,10 +144,22 @@ namespace gkr
 
 using namespace mcl::bn;
 
+const G1 G1_ZERO = [](){
+    G1 x;
+    x.clear();
+    return x;
+}();
+
 const G1 G1_ONE = [](){
     G1 x; 
     x.set(1, 2); 
     assert(x.isValid());
+    return x;
+}();
+
+const G2 G2_ZERO = [](){
+    G2 x;
+    x.clear();
     return x;
 }();
 

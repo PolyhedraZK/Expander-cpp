@@ -47,7 +47,7 @@ public:
         Fr root = get_primitive_root_of_unity<FF>(log_degree).mcl_data;
         
         output.resize(degree);
-        output[0] = root;
+        output[0] = Fr::one();
         for (size_t i = 1; i < degree; i++)
         {
             Fr::mul(output[i], output[i - 1], root);
@@ -79,7 +79,6 @@ public:
             Fr::mul(tmp, tmp, lag_denoms[i]);
             Fr::div(lag_terms[i], prod_of_lag_numerators, tmp);
         }
-
     }
 
     // lagrange terms
@@ -96,9 +95,10 @@ public:
         // denominator of lagrange terms
         lag_denoms.clear();
         lag_denoms.resize(degree, FF::ONE.mcl_data);
+   
         for (size_t i = 0; i < degree; i++)
         {
-            for (size_t j = 0; i < degree; i++)
+            for (size_t j = 0; j < degree; j++)
             {
                 if (i == j) continue;
 
@@ -106,7 +106,7 @@ public:
                 Fr::mul(lag_denoms[i], lag_denoms[i], tmp);
             }
         }
-        
+
         __lags_from_denoms(degree, secret, roots_of_unity, lag_denoms, lag_terms);
     }
 
@@ -157,19 +157,6 @@ public:
         G2::mul(g2_pow_secrets[1], G2_ONE, secret_v);
     }
 
-    void _multi_scalar_mul(const std::vector<G1> &base, const std::vector<FF> &scalars, G1 &sum)
-    {
-        assert(base.size() == scalars.size());
-        sum.clear();
-
-        G1 tmp;
-         for (size_t i = 0; i < base.size(); i++)
-        {
-            G1::mul(tmp, base[i], scalars[i].mcl_data);
-            G1::add(sum, sum, tmp);
-        }
-    }
-
     void _multi_scalar_mul(const std::vector<G1> &base, const std::vector<Fr> &scalars, G1 &sum)
     {
         assert(base.size() == scalars.size());
@@ -182,6 +169,51 @@ public:
             G1::add(sum, sum, tmp);
         }
     }
+
+    void _fast_multi_scalar_mul(const std::vector<G1> &base, const std::vector<Fr> &scalars, G1 &sum)
+    {
+        size_t c = 16;
+        std::vector<G1> buckets;
+        buckets.resize(254 / c * (1 << c), G1_ZERO);
+        for (size_t j = 0; j < base.size(); j++)
+        {
+            for (size_t k = 0; k < 254 / c; k++)
+            {
+                uint64_t temp = *(scalars[j].getUnit() + (k * c / 64));
+                size_t inside_idx = (k * c) % 64;
+                temp >>= inside_idx;
+                temp &= (1 << c) - 1;
+                buckets[(k << c) + temp] += base[j];
+            }
+        }
+
+        for (size_t i = 0; i < 254 / c; i++)
+        {
+            size_t ii = 254 / c - 1 - i;
+            for (size_t j = 0; j < c; j++)
+            {
+                G1::dbl(sum, sum);
+            }
+            G1 tmp = G1_ZERO;
+            for (size_t j = 0; j < (1 << c); j++)
+            {
+                G1 pow_res = G1_ZERO;
+                G1 base = buckets[(ii << c) + j];
+                for (size_t k = 0; k < c; k++)
+                {
+                    if ((j >> k) & 1 == 1)
+                    {
+                        pow_res += base;
+                    }
+                }
+                G1::dbl(base, base);
+                G1::add(tmp, tmp, pow_res);
+            }
+            G1::add(sum, sum, tmp);
+        }
+        
+    }
+
 
     void _eval(
         const BivariatePoly<FF> &poly, 
@@ -213,7 +245,8 @@ public:
                 Fr::mul(tmp, lags_u[i], poly.get_evals(j * poly.deg_u + i).mcl_data);
                 Fr::add(partial_eval[j], partial_eval[j], tmp);
             } 
-            Fr::add(v, v, partial_eval[j]);
+            Fr::mul(tmp, partial_eval[j], lags_v[j]);
+            Fr::add(v, v, tmp);
         }
         
     }
@@ -250,8 +283,15 @@ public:
     {
         assert(poly.deg_u == deg_u);
         assert(poly.deg_v == deg_v);
+
+        std::vector<Fr> evals;
+        evals.resize(deg_u * deg_v);
+        for (size_t i = 0; i < deg_u * deg_v; i++)
+        {
+            evals[i] = poly.get_evals(i).mcl_data;
+        }
         
-        _multi_scalar_mul(setup.g1_pow_lags_bivariate, *(poly.evals), commitment.c);
+        _multi_scalar_mul(setup.g1_pow_lags_bivariate, evals, commitment.c);
     }
 
     void open(BiKZGOpening &opening, const BivariatePoly<FF> &poly, const FF &x, const FF &y, const BiKZGSetup &setup)
@@ -263,31 +303,33 @@ public:
         
         // quotient of (Y - y)
         assert(partial_evals.size() == deg_v);
+        std::vector<Fr> q2_evals(deg_v);
         for (size_t i = 0; i < deg_v; i++)
         {
-            Fr::sub(partial_evals[i], partial_evals[i], opening.v.mcl_data);
+            Fr::sub(q2_evals[i], partial_evals[i], opening.v.mcl_data);
             Fr::sub(tmp, setup.roots_of_unity_v[i], y.mcl_data);
 
-            Fr::div(partial_evals[i], partial_evals[i], tmp);
+            Fr::div(q2_evals[i], q2_evals[i], tmp);
         }
-        _multi_scalar_mul(setup.g1_pow_lags_v, partial_evals, opening.g1_pow_q2);
+        _multi_scalar_mul(setup.g1_pow_lags_v, q2_evals, opening.g1_pow_q2);
 
         // quotient of (X - x)
-        partial_evals.clear();
-        Fr::sub(tmp, FF::ZERO.mcl_data, opening.v.mcl_data); // -v
-        partial_evals.resize(deg_u, tmp);
+        std::vector<Fr> q1_evals;
+        q1_evals.resize(deg_u * deg_v);
+
         for (size_t i = 0; i < deg_u; i++)
         {
+            Fr::sub(tmp, setup.roots_of_unity_u[i], x.mcl_data);
+            Fr::inv(tmp, tmp);
             for (size_t j = 0; j < deg_v; j++)
             {
-                Fr::mul(tmp, lags_v[j], poly.get_evals(j * deg_u + i).mcl_data);
-                Fr::add(partial_evals[i], partial_evals[i], tmp);
+                size_t idx = j * deg_u + i;
+                Fr::sub(q1_evals[idx], poly.get_evals(idx).mcl_data, partial_evals[j]);
+                Fr::mul(q1_evals[idx], q1_evals[idx], tmp);
             }
-            Fr::sub(tmp, setup.roots_of_unity_u[i], x.mcl_data);
-            Fr::div(partial_evals[i], partial_evals[i], tmp);
         }
         
-        _multi_scalar_mul(setup.g1_pow_lags_u, partial_evals, opening.g1_pow_q1);
+        _multi_scalar_mul(setup.g1_pow_lags_bivariate, q1_evals, opening.g1_pow_q1);
     }
 
     bool verify(BiKZGSetup &setup, BiKZGCommitment &commitment, const FF &x, const FF &y, BiKZGOpening &opening)
