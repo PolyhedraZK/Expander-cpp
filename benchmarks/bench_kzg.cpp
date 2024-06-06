@@ -51,6 +51,4 @@ int main()
     t1 = std::chrono::high_resolution_clock::now();
     running_time = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
     std::cout << "Running time for verify is: " << running_time << " ms" << std::endl;
-
-
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <mpi.h>
 #include <vector>
 #include <string>
 #include <chrono>

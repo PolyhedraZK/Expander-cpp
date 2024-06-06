@@ -57,7 +57,7 @@ TEST(KZG_TESTS, BI_KZG_TEST)
     bool verified = bi_kzg.verify(setup, commitment, x, y, opening);    
     EXPECT_TRUE(verified);
 
-    opening.v += F::random();
+    opening.v += F::random(); // hopefully random != 0
     bool not_verified = bi_kzg.verify(setup, commitment, x, y, opening);
     EXPECT_FALSE(not_verified);
 }

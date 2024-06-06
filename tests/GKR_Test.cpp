@@ -104,11 +104,9 @@ TEST(GKR_TEST, GKR_CORRECTNESS_TEST)
     }
     circuit.evaluate();
 
-    GKRScratchPad<F, F_primitive> *scratch_pad = new GKRScratchPad<F, F_primitive>[config.get_num_repetitions()];
-    for (int i = 0; i < config.get_num_repetitions(); i++)
-    {
-        scratch_pad[i].prepare(circuit);
-    }
+    GKRScratchPad<F, F_primitive> scratch_pad;
+    scratch_pad.prepare(circuit);
+    
     // GTest Print to see the claimed value
     Transcript<F, F_primitive> prover_transcript;
     auto t = gkr_prove<F, F_primitive>(circuit, scratch_pad, prover_transcript, config);
@@ -126,12 +124,10 @@ TEST(GKR_TEST, GKR_CORRECTNESS_TEST)
     {
         non_zero = F::random();
     }
+    claimed_value += non_zero;
+
     proof.reset();
-    Transcript<F, F_primitive> verifier_transcript_fail;
-    for(int i = 0; i < config.get_num_repetitions(); i++)
-    {
-        claimed_value[i] += non_zero;
-    }
+    Transcript<F, F_primitive> verifier_transcript_fail;    
     bool not_verified = std::get<0>(gkr_verify<F, F_primitive>(circuit, claimed_value, verifier_transcript_fail, proof, config));
     EXPECT_FALSE(not_verified);
 }
@@ -155,11 +151,9 @@ TEST(GKR_TEST, GKR_FROM_CIRCUIT_RAW_TEST)
     circuit.set_random_input();
     circuit.evaluate();
     std::cout << "Circuit Evaluated" << std::endl;
-    GKRScratchPad<F, F_primitive> *scratch_pad = new GKRScratchPad<F, F_primitive>[config.get_num_repetitions()];
-    for (int i = 0; i < config.get_num_repetitions(); i++)
-    {
-        scratch_pad[i].prepare(circuit);
-    }
+    GKRScratchPad<F, F_primitive> scratch_pad;
+    scratch_pad.prepare(circuit);
+
     Transcript<F, F_primitive> prover_transcript;
     auto t = gkr_prove<F, F_primitive>(circuit, scratch_pad, prover_transcript, config);
     auto claimed_value = std::get<0>(t);
@@ -175,12 +169,11 @@ TEST(GKR_TEST, GKR_FROM_CIRCUIT_RAW_TEST)
     {
         non_zero = F::random();
     }
+    claimed_value += non_zero;
+
     proof.reset();
     Transcript<F, F_primitive> verifier_transcript_fail;
-    for(int i = 0; i < config.get_num_repetitions(); i++)
-    {
-        claimed_value[i] += non_zero;
-    }
+    
     bool not_verified = std::get<0>(gkr_verify<F, F_primitive>(circuit, claimed_value, verifier_transcript_fail, proof, config));
     EXPECT_FALSE(not_verified);
 }

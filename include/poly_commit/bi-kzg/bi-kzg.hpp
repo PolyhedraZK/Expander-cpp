@@ -291,7 +291,7 @@ public:
             evals[i] = poly.get_evals(i).mcl_data;
         }
         
-        _multi_scalar_mul(setup.g1_pow_lags_bivariate, evals, commitment.c);
+        _fast_multi_scalar_mul(setup.g1_pow_lags_bivariate, evals, commitment.c);
     }
 
     void open(BiKZGOpening &opening, const BivariatePoly<FF> &poly, const FF &x, const FF &y, const BiKZGSetup &setup)
@@ -311,8 +311,8 @@ public:
 
             Fr::div(q2_evals[i], q2_evals[i], tmp);
         }
-        _multi_scalar_mul(setup.g1_pow_lags_v, q2_evals, opening.g1_pow_q2);
-
+        _fast_multi_scalar_mul(setup.g1_pow_lags_v, q2_evals, opening.g1_pow_q2);
+        
         // quotient of (X - x)
         std::vector<Fr> q1_evals;
         q1_evals.resize(deg_u * deg_v);
@@ -329,7 +329,7 @@ public:
             }
         }
         
-        _multi_scalar_mul(setup.g1_pow_lags_bivariate, q1_evals, opening.g1_pow_q1);
+        _fast_multi_scalar_mul(setup.g1_pow_lags_bivariate, q1_evals, opening.g1_pow_q1);
     }
 
     bool verify(BiKZGSetup &setup, BiKZGCommitment &commitment, const FF &x, const FF &y, BiKZGOpening &opening)

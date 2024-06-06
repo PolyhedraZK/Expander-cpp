@@ -162,17 +162,15 @@ public:
         const SparseCircuitConnection<F_primitive, 2>& mul,
         const SparseCircuitConnection<F_primitive, 1>& add, 
         const MultiLinearPoly<F>& vals,
-        bool* gate_exists,
-        Timing &timer)
+        bool* gate_exists
+    )
     {
-        timer.add_timing("          prepare g_x_vals, _eq_evals_at");
         F *hg_vals = pad_ptr->hg_evals;
         memset(hg_vals, 0, sizeof(F) * vals.evals.size());
         memset(gate_exists, 0, sizeof(bool) * vals.evals.size());
 
         _eq_evals_at(rz1, alpha, pad_ptr->eq_evals_at_rz1, pad_ptr -> eq_evals_first_half, pad_ptr -> eq_evals_second_half);
         _eq_evals_at(rz2, beta, pad_ptr->eq_evals_at_rz2, pad_ptr -> eq_evals_first_half, pad_ptr -> eq_evals_second_half);
-        timer.report_timing("          prepare g_x_vals, _eq_evals_at");
         F_primitive * eq_evals_at_rz1 = pad_ptr->eq_evals_at_rz1;
         F_primitive const* eq_evals_at_rz2 = pad_ptr->eq_evals_at_rz2;
         for (int i = 0; i < (1 << rz1.size()); ++i)
@@ -181,10 +179,8 @@ public:
         }
 
         auto mul_size = mul.sparse_evals.size();
-        timer.add_timing("          prepare g_x_vals, mul loop " + std::to_string(mul_size));
         const Gate<F_primitive, 2>* mul_ptr = mul.sparse_evals.data();
         const F* vals_eval_ptr = vals.evals.data();
-        timer.add_timing("          prepare g_x_vals, mul loop2 " + std::to_string(mul_size));
         for(long unsigned int i = 0; i < mul_size; i++)
         {
             // g(x) += eq(rz, z) * v(y) * coef
@@ -196,12 +192,9 @@ public:
             hg_vals[x] += vals_eval_ptr[y] * (gate.coef * eq_evals_at_rz1[z]);
             gate_exists[x] = true;
         }
-        timer.report_timing("          prepare g_x_vals, mul loop " + std::to_string(mul_size));
-        timer.report_timing("          prepare g_x_vals, mul loop2 " + std::to_string(mul_size));
         
         auto add_size = add.sparse_evals.size();
 
-        timer.add_timing("          prepare g_x_vals, add loop" + std::to_string(add_size));
         const auto add_ptr = add.sparse_evals.data();
         for(long unsigned int i = 0; i < add_size; i++)
         {
@@ -212,17 +205,15 @@ public:
             hg_vals[x] = hg_vals[x] + gate.coef * eq_evals_at_rz1[z];
             gate_exists[x] = true;
         }
-        timer.report_timing("          prepare g_x_vals, add loop" + std::to_string(add_size));
     }
 
     void _prepare_h_y_vals(
         const std::vector<F_primitive>& rx,
         const F& v_rx,
         const SparseCircuitConnection<F_primitive, 2>& mul,
-        bool *gate_exists,
-        Timing &timer)
+        bool *gate_exists
+    )
     {
-        timer.add_timing("          prepare h_y_vals, _eq_evals_at");
         F *hg_vals = pad_ptr->hg_evals;
         memset(hg_vals, 0, sizeof(F) * (1 << rx.size()));
         memset(gate_exists, 0, sizeof(bool) * (1 << rx.size()));
@@ -230,8 +221,6 @@ public:
         F_primitive const* eq_evals_at_rz1 = pad_ptr->eq_evals_at_rz1; // already computed in g_x preparation
         _eq_evals_at(rx, F_primitive::one(), pad_ptr->eq_evals_at_rx, pad_ptr -> eq_evals_first_half, pad_ptr -> eq_evals_second_half);
         F_primitive const* eq_evals_at_rx = pad_ptr->eq_evals_at_rx;
-        timer.report_timing("          prepare h_y_vals, _eq_evals_at");
-        timer.add_timing("          prepare h_y_vals, loop");
         for(const Gate<F_primitive, 2>& gate: mul.sparse_evals)
         {
             // g(y) += eq(rz, z) * eq(rx, x) * v(y) * coef
@@ -242,18 +231,12 @@ public:
             hg_vals[y] += v_rx * (eq_evals_at_rz1[z] * eq_evals_at_rx[x] * gate.coef);
             gate_exists[y] = true;
         }
-        timer.report_timing("          prepare h_y_vals, loop");
     }
 
-    void _prepare_phase_two(Timing &timer)
+    void _prepare_phase_two()
     {
-        timer.add_timing("      prepare phase two, _prepare_h_y_vals");
-        _prepare_h_y_vals(rx, vx_claim(), poly_ptr->mul, pad_ptr->gate_exists, timer);
-        timer.report_timing("      prepare phase two, _prepare_h_y_vals");
-        timer.add_timing("      prepare phase two, prepare");
-        // TODO: may use the memory v_x_evals as long as the value vx_claim is saved
+        _prepare_h_y_vals(rx, vx_claim(), poly_ptr->mul, pad_ptr->gate_exists);
         y_helper.prepare(nb_input_vars, pad_ptr->v_evals, pad_ptr->hg_evals, poly_ptr->input_layer_vals.evals.data());
-        timer.report_timing("      prepare phase two, prepare");
     }
 
 public:
@@ -263,8 +246,7 @@ public:
         const std::vector<F_primitive>& rz2,
         const F_primitive& alpha_,
         const F_primitive& beta_,
-        GKRScratchPad<F, F_primitive>& scratch_pad,
-        Timing &timer)
+        GKRScratchPad<F, F_primitive>& scratch_pad)
     {
         nb_input_vars = poly.nb_input_vars;
         nb_output_vars = poly.nb_output_vars;
@@ -276,15 +258,11 @@ public:
         pad_ptr = &scratch_pad;
 
         // phase one
-        timer.add_timing("      prepare phase one, _prepare_g_x_vals");
-        _prepare_g_x_vals(rz1, rz2, alpha, beta, poly.mul, poly.add, poly.input_layer_vals, pad_ptr->gate_exists, timer);
-        timer.report_timing("      prepare phase one, _prepare_g_x_vals");
-        timer.add_timing("      prepare phase one, prepare");
+        _prepare_g_x_vals(rz1, rz2, alpha, beta, poly.mul, poly.add, poly.input_layer_vals, pad_ptr->gate_exists);
         x_helper.prepare(nb_input_vars, pad_ptr->v_evals, pad_ptr->hg_evals, poly.input_layer_vals.evals.data());
-        timer.report_timing("      prepare phase one, prepare");
     }
 
-    std::vector<F> poly_evals_at(uint32 var_idx, uint32 degree, Timing &timer)
+    std::vector<F> poly_evals_at(uint32 var_idx, uint32 degree)
     {
         if (var_idx < nb_input_vars)
         {
@@ -294,7 +272,7 @@ public:
         {
             if (var_idx == nb_input_vars)
             {
-                _prepare_phase_two(timer);
+                _prepare_phase_two();
             }
             
             return y_helper.poly_eval_at(var_idx - nb_input_vars, degree, pad_ptr->gate_exists);
