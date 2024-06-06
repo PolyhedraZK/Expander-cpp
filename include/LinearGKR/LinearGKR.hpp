@@ -61,8 +61,13 @@ public:
         Transcript<F, F_primitive> transcript;
         transcript.append_bytes(buffer, commitment.size());
 
-        //grinding
+        // grinding
         grind(transcript, config);
+
+        // rnd gate
+        circuit.fill_rnd_gate(transcript);
+        circuit.evaluate();
+
         // gkr
         auto t = gkr_prove<F, F_primitive>(circuit, scratch_pad, transcript, config);
         
@@ -109,6 +114,9 @@ public:
         //grinding
         grind(transcript, config);
         proof.step(commitment.size() + 256/8);
+
+        // rnd gate
+        circuit.fill_rnd_gate(transcript);
 
         // gkr
         auto t = gkr_verify<F, F_primitive>(circuit, claimed_v, transcript, proof, config);

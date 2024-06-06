@@ -18,7 +18,8 @@ TEST(SUMCHECK_TEST, SUMCHECK_GKR_LAYER)
     Circuit<F, F_primitive> circuit;
     circuit.layers.emplace_back(layer);
 
-    std::vector<F> output = layer.evaluate();
+    std::vector<F> output;
+    layer.evaluate(output);
 
     std::vector<std::vector<F_primitive>> rz1, rz2;
     rz1.resize(config.get_num_repetitions());
