@@ -54,6 +54,15 @@ public:
         return f;
     }
 
+    // use an invalid value to indicate this is a random gate, currently = p
+    static BN254_Fr default_rand_sentinel()
+    {
+        BN254_Fr f;
+        f.mcl_data.setStr("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10);
+        assert(!f.mcl_data.isValid());
+        return f;
+    }
+
 
 public:
     BN254_Fr()

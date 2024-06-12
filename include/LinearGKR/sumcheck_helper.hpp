@@ -44,6 +44,56 @@ class Timing
         cout << name << " took " << duration.count() << " microseconds" << endl;
     }
 };
+
+template<typename F, typename F_primitive>
+class SumcheckMultiLinearHelper
+{
+public:
+    uint32 nb_vars;
+    uint32 sumcheck_var_idx;
+    F *bookkeeping;
+    const F *initial_v;
+
+    std::vector<F_primitive> rs;
+
+    void prepare(uint32 nb_vars_, F* evals, const F *initial_v_)
+    {
+        nb_vars = nb_vars;
+        sumcheck_var_idx = 0;
+        bookkeeping = evals;
+        initial_v = initial_v_;
+        rs.clear();
+    }
+
+    std::vector<F> poly_eval_at(uint32 var_idx)
+    {
+        F p0 = F::zero();
+        F p1 = F::zero();
+        
+        const F *src_v = (var_idx == 0 ? initial_v : bookkeeping);
+        uint32 cur_eval_size = 1 << (nb_vars - var_idx - 1);
+        for (uint32 i = 0; i < cur_eval_size; i++)
+        {
+            p0 += src_v[i * 2];
+            p1 += src_v[i * 2 + 1];
+        }
+
+        return {p0, p1};
+    }
+
+    void receive_challenge(uint32 var_idx, const F_primitive & r)
+    {
+        const F *src_v = (var_idx == 0 ? initial_v : bookkeeping);
+        uint32 cur_eval_size = 1 << (nb_vars - var_idx - 1);
+        for (uint32 i = 0; i < cur_eval_size; i++)
+        {        
+            bookkeeping[i] = src_v[2 * i] + (src_v[2 * i + 1] - src_v[2 * i]) * r;
+        }
+        rs.emplace_back(r);
+    }
+
+};
+
 template<typename F, typename F_primitive>
 class SumcheckMultiLinearProdHelper
 {

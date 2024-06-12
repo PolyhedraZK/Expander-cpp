@@ -172,48 +172,9 @@ public:
 
     void _fast_multi_scalar_mul(const std::vector<G1> &base, const std::vector<Fr> &scalars, G1 &sum)
     {
-        size_t c = 16;
-        std::vector<G1> buckets;
-        buckets.resize(254 / c * (1 << c), G1_ZERO);
-        for (size_t j = 0; j < base.size(); j++)
-        {
-            for (size_t k = 0; k < 254 / c; k++)
-            {
-                uint64_t temp = *(scalars[j].getUnit() + (k * c / 64));
-                size_t inside_idx = (k * c) % 64;
-                temp >>= inside_idx;
-                temp &= (1 << c) - 1;
-                buckets[(k << c) + temp] += base[j];
-            }
-        }
-
-        for (size_t i = 0; i < 254 / c; i++)
-        {
-            size_t ii = 254 / c - 1 - i;
-            for (size_t j = 0; j < c; j++)
-            {
-                G1::dbl(sum, sum);
-            }
-            G1 tmp = G1_ZERO;
-            for (size_t j = 0; j < (1 << c); j++)
-            {
-                G1 pow_res = G1_ZERO;
-                G1 base = buckets[(ii << c) + j];
-                for (size_t k = 0; k < c; k++)
-                {
-                    if ((j >> k) & 1 == 1)
-                    {
-                        pow_res += base;
-                    }
-                }
-                G1::dbl(base, base);
-                G1::add(tmp, tmp, pow_res);
-            }
-            G1::add(sum, sum, tmp);
-        }
-        
+        // Warning: here the base maybe normalized, but the value does not change
+        G1::mulVec(sum, const_cast<G1*>(base.data()), scalars.data(), scalars.size());
     }
-
 
     void _eval(
         const BivariatePoly<FF> &poly, 

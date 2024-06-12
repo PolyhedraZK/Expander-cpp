@@ -10,9 +10,15 @@ FetchContent_Declare(
         mcl
         # Specify the commit you depend on and update it regularly.
         URL https://github.com/herumi/mcl/archive/refs/tags/v1.92.zip
-	DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+	# DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(mcl)
+
+# TODO: replace this with fetch?
+find_package(MPI)
+include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+message(STATUS "MPI HEADERS FOUND at:" ${MPI_INCLUDE_PATH})
+message(STATUS "MPI LIBRARIES FOUND at:" ${MPI_C_LIBRARIES})
 
 set(CMAKE_CXX_STANDARD 20)
 # Check the system processor and set compiler flags based on the architecture
