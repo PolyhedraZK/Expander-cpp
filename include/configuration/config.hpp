@@ -2,72 +2,64 @@
 #include <cassert>
 #include "field/M31.hpp"
 
-enum Polynomial_commitment_type {
+// polynomial commitment type
+enum PCType 
+{
     Raw,
     KZG,
     Orion,
     FRI,
 };
 
-enum FieldType {
+enum FieldType 
+{
     M31,
     BabyBear,
     BN254,
 };
 
-enum FiatShamir_hash_type {
-    SHA256,
-    Keccak256,
-    Poseidon,
-    Animoe,
-    MIMC7,
-};
+// fiat-shamir hash type
+// enum FSHashType 
+// {
+//     SHA256,
+//     Keccak256,
+//     Poseidon,
+//     Animoe,
+//     MIMC7,
+// };
 
 class Config
 {
-private:
-    int num_repetitions;
-    int vectorize_size;
-
-public:
+public:    
+    // === Field ===
+    FieldType field_type;
     int field_size;
+    
+    int m31_parallel_factor;
+    int m31_vectorize_size;
+    // ============
+
+    // === PC === 
+    PCType pc_type;
+    // ==========
+
+    // === security ===
     int security_bits;
     int grinding_bits;
-    int nb_parallel;
-    Polynomial_commitment_type PC_type;
-    FieldType field_type;
-    FiatShamir_hash_type FS_hash;
-    
-    void initialize_config()
-    {
-        security_bits = 100;
-        
-        num_repetitions = (security_bits - grinding_bits) / field_size;
-        if ((security_bits - grinding_bits) % field_size != 0)
-        {
-            num_repetitions++;
-        }
+    // ================
 
-        if (PC_type == KZG)
-        {
-            assert(field_size == BN254);
-        }
-    }
+    // === MPI ===
+    size_t mpi_world_size;
+    // ===========
 
     Config()
     {
+        set_field(M31);
+        set_pc(PCType::Raw);
+        
         security_bits = 100;
         grinding_bits = 10;
-        nb_parallel = 16;
-        PC_type = Raw;
-        FS_hash = SHA256;
-        set_field(M31);
-        initialize_config();
-    }
-    
-    int get_num_repetitions() const
-    {
-        return num_repetitions;
+        mpi_world_size = 1;
     }
 
     void set_field(FieldType field_type_)
@@ -78,19 +70,42 @@ public:
         {
             case M31:
                 field_size = 31;
-                // TODO: set the value of vectorize_size in VectorizedM31
-                vectorize_size = nb_parallel / gkr::M31_field::PackedM31::pack_size();
+                m31_parallel_factor = 16;
+                m31_vectorize_size =  m31_parallel_factor / gkr::M31_field::PackedM31::pack_size();
                 break;
             case BabyBear:
                 field_size = 31;
+                throw("BabyBear is not supported yet.");
                 break;
             case BN254:
                 field_size = 254;
                 break;
             default:
-                assert(false);
+                throw("Unknown field");
                 break;
         }
+    }
+
+    void set_pc(PC_type pc_type_)
+    {
+        pc_type = pc_type_;
+        switch (pc_type)
+        {
+        case KZG:
+            if (field_type != BN254)
+            {
+                throw("KZG must be used with BN254 Scalar Field");
+            }
+            break;
+        
+        default:
+            break;
+        }
+    }
+
+    void set_mpi_size(size_t n)
+    {
+        mpi_world_size = n;
     }
 };
 

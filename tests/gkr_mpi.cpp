@@ -29,7 +29,9 @@ TEST(GKR_TEST, GKR_MPI)
     }
     circuit._extract_rnd_gates();
 
-    Config default_config{};
+    Config default_config;
+    default_config.set_mpi_size(world_size);
+
     Prover<F, F_primitive> prover(default_config);
     prover.prepare_mem(circuit);
     auto t = prover.prove(circuit);

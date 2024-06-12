@@ -54,15 +54,15 @@ public:
     F *bookkeeping;
     const F *initial_v;
 
-    std::vector<F_primitive> rs;
+    std::vector<F_primitive> rx;
 
     void prepare(uint32 nb_vars_, F* evals, const F *initial_v_)
     {
-        nb_vars = nb_vars;
+        nb_vars = nb_vars_;
         sumcheck_var_idx = 0;
         bookkeeping = evals;
         initial_v = initial_v_;
-        rs.clear();
+        rx.clear();
     }
 
     std::vector<F> poly_eval_at(uint32 var_idx)
@@ -89,7 +89,7 @@ public:
         {        
             bookkeeping[i] = src_v[2 * i] + (src_v[2 * i + 1] - src_v[2 * i]) * r;
         }
-        rs.emplace_back(r);
+        rx.emplace_back(r);
     }
 
 };
@@ -351,6 +351,11 @@ public:
     F vy_claim()
     {
         return pad_ptr->v_evals[0];
+    }
+
+    F reduced_claim()
+    {
+        return pad_ptr->v_evals[0] * pad_ptr->hg_evals[0];
     }
 };
 

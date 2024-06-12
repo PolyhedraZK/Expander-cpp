@@ -40,8 +40,8 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_
     uint32 lg_output_size = circuit.layers.back().nb_output_vars; 
     
     std::vector<F_primitive> rz1(lg_output_size, F_primitive::zero()), 
-        rz2(lg_output_size, F_primitive::zero()), r_world(lg_world_size);
-    std::vector<F_primitive> rand_coefs(world_size, F_primitive::zero());
+        rz2(lg_output_size, F_primitive::zero()), r_mpi(lg_world_size);
+    std::vector<F_primitive> mpi_combine_coefs(world_size, F_primitive::zero());
 
     if (world_rank == 0)
     {
@@ -52,9 +52,9 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_
         
         for (uint32 i = 0; i < lg_world_size; i++)
         {
-            r_world[i] = transcript.challenge_f();
+            r_mpi[i] = transcript.challenge_f();
         }
-        _eq_evals_at_primitive(r_world, F_primitive::one(), rand_coefs.data());
+        _eq_evals_at_primitive(r_mpi, F_primitive::one(), mpi_combine_coefs.data());
     }
     MPI_Bcast(rz1.data(), rz1.size() * sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -62,7 +62,7 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_
 
     F claimed_v_local = eval_multilinear(circuit.layers.back().output_layer_vals.evals, rz1);
     F claimed_v_global;
-    _mpi_rnd_combine(claimed_v_local, claimed_v_global, rand_coefs);
+    _mpi_rnd_combine(claimed_v_local, claimed_v_global, mpi_combine_coefs);
 
     for (int i = n_layers - 1; i >= 0; i--)
     {
@@ -71,28 +71,23 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_
             std::cout << "Sumcheck at layer " << i << std::endl;
         }
 
-        std::tuple<std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_primitive>> t
-            = sumcheck_prove_gkr_layer<F, F_primitive>(circuit.layers[i], rz1, rz2, rand_coefs, alpha, beta, transcript, scratch_pad, config);
+        // SIDE EFFECT: rz1, rz2, r_mpi and mpi_combine_coefs will be updated in this function
+        sumcheck_prove_gkr_layer<F, F_primitive>(circuit.layers[i], rz1, rz2, r_mpi, mpi_combine_coefs, alpha, beta, transcript, scratch_pad, config);
         
-        if (world_rank == 0)
+        // prepare alpha and beta for next layer
+        if (i != 0)
         {
-            alpha = transcript.challenge_f();
-            beta = transcript.challenge_f();
-        }
-        MPI_Bcast(&alpha, sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&beta, sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
-        
-        rz1 = std::get<0>(t);
-        rz2 = std::get<1>(t);
-        
-        if (world_rank == 0)
-        {
-            r_world = std::get<2>(t);
-            _eq_evals_at_primitive(r_world, F_primitive::one(), rand_coefs.data());
+            if (world_rank == 0)
+            {
+                alpha = transcript.challenge_f();
+                beta = transcript.challenge_f();
+            }
+            MPI_Bcast(&alpha, sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
+            MPI_Bcast(&beta, sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
         }
         
     }
-    return {claimed_v_global, rz1, rz2, r_world};
+    return {claimed_v_global, rz1, rz2, r_mpi};
 }
 
 template<typename F, typename F_primitive>
@@ -104,14 +99,27 @@ std::tuple<bool, std::vector<F_primitive>, std::vector<F_primitive>, F, F > gkr_
     const Config &config
 )
 {
+    uint32 world_size = config.mpi_world_size;
+
+    uint32 lg_world_size = log_2(world_size);
+    uint32 lg_output_size = circuit.layers.back().nb_output_vars; 
     uint32 n_layers = circuit.layers.size();
     
-    std::vector<F_primitive> rz1, rz2;
-    for (uint32 i = 0; i < circuit.layers.back().nb_output_vars; i++)
+    std::vector<F_primitive> rz1, rz2, r_mpi;
+    std::vector<F_primitive> mpi_combine_coefs(world_size);    
+    
+    for (uint32 i = 0; i < lg_output_size; i++)
     {
         rz1.emplace_back(transcript.challenge_f());
         rz2.emplace_back(F_primitive::zero());
     }
+
+    for (uint32 i = 0; i < lg_world_size; i++)
+    {
+        r_mpi.emplace_back(transcript.challenge_f());
+    }
+    _eq_evals_at_primitive(r_mpi, F_primitive::one(), mpi_combine_coefs.data());
+    
     F_primitive alpha = F_primitive::one(), beta = F_primitive::zero();
     F claimed_v1 = claimed_v, claimed_v2 = F::zero();
 
