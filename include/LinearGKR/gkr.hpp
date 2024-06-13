@@ -91,7 +91,7 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_
 }
 
 template<typename F, typename F_primitive>
-std::tuple<bool, std::vector<F_primitive>, std::vector<F_primitive>, F, F > gkr_verify(
+std::tuple<bool, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_primitive>, F, F> gkr_verify(
     const Circuit<F, F_primitive>& circuit,
     const F& claimed_v,
     Transcript<F, F_primitive>& transcript,
@@ -126,20 +126,12 @@ std::tuple<bool, std::vector<F_primitive>, std::vector<F_primitive>, F, F > gkr_
     bool verified = true;
     for (int i = n_layers - 1; i >= 0; i--)
     {
-        std::tuple<bool, std::vector<F_primitive>, std::vector<F_primitive>, F, F > t 
-            = sumcheck_verify_gkr_layer(circuit.layers[i], rz1, rz2, claimed_v1, claimed_v2, alpha, beta, proof, transcript, config);
-        
-        verified &= std::get<0>(t);
+        verified &= sumcheck_verify_gkr_layer(circuit.layers[i], rz1, rz2, claimed_v1, claimed_v2, alpha, beta, proof, transcript, config);
 
         alpha = transcript.challenge_f();
         beta = transcript.challenge_f();
-        
-        rz1 = std::get<1>(t);
-        rz2 = std::get<2>(t);
-        claimed_v1 = std::get<3>(t);
-        claimed_v2 = std::get<4>(t);
     }
-    return {verified, rz1, rz2, claimed_v1, claimed_v2};
+    return {verified, rz1, rz2, r_mpi, claimed_v1, claimed_v2};
 }
 
 }

@@ -86,7 +86,7 @@ public:
         }
     }
 
-    void set_pc(PC_type pc_type_)
+    void set_pc(PCType pc_type_)
     {
         pc_type = pc_type_;
         switch (pc_type)
