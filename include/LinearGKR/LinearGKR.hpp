@@ -98,7 +98,7 @@ public:
     }
 
     template<typename F, typename F_primitive>
-    bool verify(Circuit<F, F_primitive>& circuit, F& claimed_v, Proof<F>& proof)
+    bool verify(Circuit<F, F_primitive>& circuit, const F& claimed_v, Proof<F>& proof)
     {
 
         // get commitment

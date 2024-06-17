@@ -132,6 +132,11 @@ public:
     {
         mcl_data.setLittleEndianMod(input, 32);
     }
+
+    bool is_valid()
+    {
+        return mcl_data.isValid();
+    }
 };
 
 bool initialized = []() {init(); return true; }();

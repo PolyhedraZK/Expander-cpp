@@ -11,8 +11,9 @@
 TEST(GKR_TEST, GKR_MPI)
 {
     using namespace gkr;
-    using F = gkr::M31_field::VectorizedM31;
-    using F_primitive = gkr::M31_field::M31;
+    using F = gkr::bn254fr::BN254_Fr;
+    using F_primitive = gkr::bn254fr::BN254_Fr;
+    bn254fr::init();
     
     int world_rank, world_size;
 
@@ -25,9 +26,11 @@ TEST(GKR_TEST, GKR_MPI)
     Circuit<F, F_primitive> circuit;
     for (int i = n_layers - 1; i >= 0; --i)
     {
-        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2, true));
+        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2, false));
     }
     circuit._extract_rnd_gates();
+
+    std::cout << "start proving" << std::endl;
 
     Config default_config;
     default_config.set_mpi_size(world_size);
@@ -38,13 +41,18 @@ TEST(GKR_TEST, GKR_MPI)
 
     F claimed_v;
     Proof<F> proof;
-    if (world_rank == 0) // temporarily skip verify
+    if (world_rank == 0)
     {
-        // claimed_v = std::get<0>(t);
-        // proof = std::get<1>(t);
-        // Verifier verifier{default_config};
-        // bool verified = verifier.verify(circuit, claimed_v, proof);
-        // EXPECT_TRUE(verified);
+        std::cout << "start verifying" << std::endl;
+        claimed_v = std::get<0>(t);
+        proof = std::get<1>(t);
+        Verifier verifier{default_config};
+        bool verified = verifier.verify(circuit, claimed_v, proof);
+        EXPECT_TRUE(verified);
+
+        proof.reset();
+        bool not_verified = verifier.verify(circuit, claimed_v + F::random(), proof);
+        EXPECT_FALSE(not_verified);
     }
     MPI_Finalize();
 }

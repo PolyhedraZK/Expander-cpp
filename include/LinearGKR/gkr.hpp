@@ -24,7 +24,10 @@ namespace gkr
 
 
 template<typename F, typename F_primitive>
-std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_primitive>> gkr_prove(
+std::tuple<F, 
+    std::vector<F_primitive>, std::vector<F_primitive>, 
+    std::vector<F_primitive>, std::vector<F_primitive>>
+gkr_prove(
     const Circuit<F, F_primitive> &circuit, 
     GKRScratchPad<F, F_primitive> &scratch_pad,
     Transcript<F, F_primitive> &transcript,
@@ -39,9 +42,9 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_
     uint32 n_layers = circuit.layers.size();
     uint32 lg_output_size = circuit.layers.back().nb_output_vars; 
     
+    std::vector<F_primitive> mpi_combine_coefs(world_size);
     std::vector<F_primitive> rz1(lg_output_size, F_primitive::zero()), 
-        rz2(lg_output_size, F_primitive::zero()), r_mpi(lg_world_size);
-    std::vector<F_primitive> mpi_combine_coefs(world_size, F_primitive::zero());
+        rz2(lg_output_size, F_primitive::zero()), rw1(lg_world_size), rw2(lg_world_size);
 
     if (world_rank == 0)
     {
@@ -52,9 +55,9 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_
         
         for (uint32 i = 0; i < lg_world_size; i++)
         {
-            r_mpi[i] = transcript.challenge_f();
+            rw1[i] = transcript.challenge_f();
         }
-        _eq_evals_at_primitive(r_mpi, F_primitive::one(), mpi_combine_coefs.data());
+        _eq_evals_at_primitive(rw1, F_primitive::one(), mpi_combine_coefs.data());
     }
     MPI_Bcast(rz1.data(), rz1.size() * sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -66,13 +69,13 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_
 
     for (int i = n_layers - 1; i >= 0; i--)
     {
-        if (world_rank == 0)
+        if (world_rank == 1)
         {
             std::cout << "Sumcheck at layer " << i << std::endl;
         }
 
-        // SIDE EFFECT: rz1, rz2, r_mpi and mpi_combine_coefs will be updated in this function
-        sumcheck_prove_gkr_layer<F, F_primitive>(circuit.layers[i], rz1, rz2, r_mpi, mpi_combine_coefs, alpha, beta, transcript, scratch_pad, config);
+        // SIDE EFFECT: rz1, rz2, rw1 and rw2 will be updated in this function
+        sumcheck_prove_gkr_layer<F, F_primitive>(circuit.layers[i], rz1, rz2, rw1, rw2, alpha, beta, transcript, scratch_pad, config);
         
         // prepare alpha and beta for next layer
         if (i != 0)
@@ -87,11 +90,14 @@ std::tuple<F, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_
         }
         
     }
-    return {claimed_v_global, rz1, rz2, r_mpi};
+    return {claimed_v_global, rz1, rz2, rw1, rw2};
 }
 
 template<typename F, typename F_primitive>
-std::tuple<bool, std::vector<F_primitive>, std::vector<F_primitive>, std::vector<F_primitive>, F, F> gkr_verify(
+std::tuple<bool, 
+std::vector<F_primitive>, std::vector<F_primitive>, 
+std::vector<F_primitive>, std::vector<F_primitive>, F, F> 
+gkr_verify(
     const Circuit<F, F_primitive>& circuit,
     const F& claimed_v,
     Transcript<F, F_primitive>& transcript,
@@ -105,7 +111,7 @@ std::tuple<bool, std::vector<F_primitive>, std::vector<F_primitive>, std::vector
     uint32 lg_output_size = circuit.layers.back().nb_output_vars; 
     uint32 n_layers = circuit.layers.size();
     
-    std::vector<F_primitive> rz1, rz2, r_mpi;
+    std::vector<F_primitive> rz1, rz2, rwx, rwy;
     std::vector<F_primitive> mpi_combine_coefs(world_size);    
     
     for (uint32 i = 0; i < lg_output_size; i++)
@@ -116,9 +122,9 @@ std::tuple<bool, std::vector<F_primitive>, std::vector<F_primitive>, std::vector
 
     for (uint32 i = 0; i < lg_world_size; i++)
     {
-        r_mpi.emplace_back(transcript.challenge_f());
+        rwx.emplace_back(transcript.challenge_f());
     }
-    _eq_evals_at_primitive(r_mpi, F_primitive::one(), mpi_combine_coefs.data());
+    _eq_evals_at_primitive(rwx, F_primitive::one(), mpi_combine_coefs.data());
     
     F_primitive alpha = F_primitive::one(), beta = F_primitive::zero();
     F claimed_v1 = claimed_v, claimed_v2 = F::zero();
@@ -126,12 +132,12 @@ std::tuple<bool, std::vector<F_primitive>, std::vector<F_primitive>, std::vector
     bool verified = true;
     for (int i = n_layers - 1; i >= 0; i--)
     {
-        verified &= sumcheck_verify_gkr_layer(circuit.layers[i], rz1, rz2, claimed_v1, claimed_v2, alpha, beta, proof, transcript, config);
+        verified &= sumcheck_verify_gkr_layer(circuit.layers[i], rz1, rz2, rwx, rwy, claimed_v1, claimed_v2, alpha, beta, proof, transcript, config);
 
         alpha = transcript.challenge_f();
         beta = transcript.challenge_f();
     }
-    return {verified, rz1, rz2, r_mpi, claimed_v1, claimed_v2};
+    return {verified, rz1, rz2, rwx, rwy, claimed_v1, claimed_v2};
 }
 
 }

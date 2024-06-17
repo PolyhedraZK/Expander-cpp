@@ -79,8 +79,8 @@ void sumcheck_prove_gkr_layer(
     const CircuitLayer<F, F_primitive>& poly,
     std::vector<F_primitive>& rz1,
     std::vector<F_primitive>& rz2,
-    std::vector<F_primitive>& r_mpi,
-    std::vector<F_primitive>& mpi_combine_coefs,
+    std::vector<F_primitive>& rw1,
+    std::vector<F_primitive>& rw2,
     const F_primitive& alpha,
     const F_primitive& beta,
     Transcript<F, F_primitive>& transcript,
@@ -88,79 +88,52 @@ void sumcheck_prove_gkr_layer(
     const Config &config
 )
 {
-    int world_rank, world_size;
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    uint32 world_rank, world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, reinterpret_cast<int*>(&world_size));
+    MPI_Comm_rank(MPI_COMM_WORLD, reinterpret_cast<int*>(&world_rank));
+    uint32 lg_world_size = log_2(world_size);
 
     // v_next(rx), v_next(ry), v(ry) \cdot h(ry)
     F vx_claim, vy_claim, reduced_claim;
-    std::vector<F> vx_claims(world_size), vy_claims(world_size), reduced_claims(world_size);
 
     SumcheckGKRHelper<F, F_primitive> helper; 
-    helper.prepare(poly, rz1, rz2, alpha, beta, scratch_pad);
+    helper.prepare(poly, rz1, rz2, rw1, rw2, alpha, beta, scratch_pad);
 
-    for (uint32 i_var = 0; i_var < (2 * poly.nb_input_vars); i_var++)
+    for (uint32 i_var = 0; i_var < (2 * (poly.nb_input_vars + lg_world_size)); i_var++)
     {
         std::vector<F> evals = helper.poly_evals_at(i_var, 2);
-        std::vector<F> evals_global(3);
         
-        _mpi_rnd_combine(evals[0], evals_global[0], mpi_combine_coefs);
-        _mpi_rnd_combine(evals[1], evals_global[1], mpi_combine_coefs);
-        _mpi_rnd_combine(evals[2], evals_global[2], mpi_combine_coefs);
-
         F_primitive r;
         if (world_rank == 0)
         {
-            transcript.append_f(evals_global[0]);
-            transcript.append_f(evals_global[1]);
-            transcript.append_f(evals_global[2]);
+            transcript.append_f(evals[0]);
+            transcript.append_f(evals[1]);
+            transcript.append_f(evals[2]);
             r = transcript.challenge_f();
         }
         MPI_Bcast(&r, sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
 
         helper.receive_challenge(i_var, r);
-        if (i_var == poly.nb_input_vars - 1)
+        if (i_var == poly.nb_input_vars + lg_world_size - 1)
         {
-            vx_claim = helper.vx_claim();
-            MPI_Gather(&vx_claim, sizeof(F), MPI_CHAR, vx_claims.data(), sizeof(F), MPI_CHAR, 0, MPI_COMM_WORLD);
             if (world_rank == 0)
             {
-                for (const F &vx_claim: vx_claims)
-                {
-                    transcript.append_f(vx_claim);
-                }
+                vx_claim = helper.vx_claim();
+                transcript.append_f(vx_claim);
             }
         }
     }
 
-    vy_claim = helper.vy_claim();
-    reduced_claim = helper.reduced_claim();
-
-    MPI_Gather(&vy_claim, sizeof(F), MPI_CHAR, vy_claims.data(), sizeof(F), MPI_CHAR, 0, MPI_COMM_WORLD);
-    MPI_Gather(&reduced_claim, sizeof(F), MPI_CHAR, reduced_claims.data(), sizeof(F), MPI_CHAR, 0, MPI_COMM_WORLD);
-
     if(world_rank == 0)
     {
-        assert(reduced_claims.size() == world_size);
-        for (uint32 i = 0; i < reduced_claims.size(); i++)
-        {
-            reduced_claims[i] = reduced_claims[i] * mpi_combine_coefs[i];
-        }
-        sumcheck_prove_multilinear(reduced_claims, r_mpi, transcript, scratch_pad);
-        _eq_evals_at_primitive(r_mpi, F_primitive::one(), mpi_combine_coefs.data());
-
-        F vx_claim_global = F::zero(), vy_claim_global = F::zero();
-        for (uint32 i = 0; i < world_size; i++)
-        {
-            vx_claim_global += vx_claims[i] * mpi_combine_coefs[i];
-            vy_claim_global += vy_claims[i] * mpi_combine_coefs[i];
-        }
-        transcript.append_f(vx_claim_global);
-        transcript.append_f(vy_claim_global);
+        vy_claim = helper.vy_claim();
+        transcript.append_f(vy_claim);
     }
     
     rz1 = helper.rx;
     rz2 = helper.ry;
+    rw1 = helper.rwx;
+    rw2 = helper.rwy;    
 }
 
 template<typename F, typename F_primitive>
@@ -168,8 +141,8 @@ bool sumcheck_verify_gkr_layer(
     const CircuitLayer<F, F_primitive>& poly,
     std::vector<F_primitive> &rz1,
     std::vector<F_primitive> &rz2,
-    std::vector<F_primitive> &r_mpi,
-    std::vector<F_primitive> &mpi_combine_coefs,
+    std::vector<F_primitive> &rw1,
+    std::vector<F_primitive> &rw2,
     F& claimed_v1,
     F& claimed_v2,
     const F_primitive& alpha,
@@ -179,19 +152,20 @@ bool sumcheck_verify_gkr_layer(
     const Config &config
 )
 {
+    uint32 lg_world_size = log_2(config.mpi_world_size);
     uint32 nb_vars = poly.nb_input_vars;
+
     F claimed_v = claimed_v1 * alpha + claimed_v2 * beta;
-    
-    F summation_of_mpi_combine_coefs = std::accumulate(mpi_combine_coefs.begin(), mpi_combine_coefs.end(), F_primitive::zero());
-    F cst = eval_sparse_circuit_connect_poly(poly.cst, rz1, rz2, alpha, beta, std::vector<std::vector<F_primitive>>{});
-    claimed_v -= summation_of_mpi_combine_coefs * cst;
+    F cst = eval_sparse_circuit_connect_poly(poly.cst, rz1, rz2, rw1, rw2, alpha, beta, {}, {}, {});
+    claimed_v -= cst;
 
     // start verification
-    std::vector<F_primitive> rx, ry;
+    std::vector<F_primitive> rx, ry, rwx, rwy;
     std::vector<F_primitive> *rs = &rx;
+    F vx_claim;
     bool verified = true;
-    std::vector<F> &low_degree_evals;
-    for (uint32 i_var = 0; i_var < (2 * nb_vars); i_var++)
+    std::vector<F> low_degree_evals;
+    for (uint32 i_var = 0; i_var < (2 * (nb_vars + lg_world_size)); i_var++)
     {
         low_degree_evals = {proof.get_next_and_step(), proof.get_next_and_step(), proof.get_next_and_step()};
 
@@ -206,32 +180,36 @@ bool sumcheck_verify_gkr_layer(
 
         if (i_var == nb_vars - 1)
         {
-            F vx_claim = F::zero();
-            for (uint32 i = 0; i < config.mpi_world_size; i++)
-            {
-                F vx_claim_local = proof.get_next_and_step();
-                transcript.append_f(vx_claim_local);
-                vx_claim += mpi_combine_coefs[i] * vx_claim_local;
-            }
-            
-            claimed_v -= vx_claim * eval_sparse_circuit_connect_poly(poly.add, rz1, rz2, alpha, beta, {rx});
+            rs = &rwx;
+        }
+
+        if (i_var == nb_vars + lg_world_size - 1)
+        {
+            vx_claim = proof.get_next_and_step();
+            transcript.append_f(vx_claim);
+            claimed_v -= vx_claim * eval_sparse_circuit_connect_poly(poly.add, rz1, rz2, rw1, rw2, alpha, beta, {rx}, rwx, rwy);
             rs = &ry;
+        }
+
+        if (i_var == nb_vars * 2 + lg_world_size - 1)
+        {
+            rs = &rwy;
         }
     }
     
-    sumcheck_verify_multilinear(nb_vars, r_mpi, degree_2_eval(low_degree_evals, rs->back()), proof, transcript);
-    _eq_evals_at_primitive(r_mpi, F_primitive::one(), mpi_combine_coefs);
 
-    F vx_claim_global = proof.get_next_and_step();
-    F vy_claim_global = proof.get_next_and_step();
-    verified &= claimed_v == vx_claim_global * vy_claim_global * eval_sparse_circuit_connect_poly(poly.mul, rz1, rz2, alpha, beta, {rx, ry});
-    transcript.append_f(vx_claim_global);
-    transcript.append_f(vy_claim_global);
-        
+    F vy_claim = proof.get_next_and_step();
+    transcript.append_f(vy_claim);
+
+    claimed_v -= vx_claim * vy_claim * eval_sparse_circuit_connect_poly(poly.mul, rz1, rz2, rw1, rw2, alpha, beta, {rx, ry}, rwx, rwy);
+    verified &= claimed_v == F::zero();
+
     rz1 = rx;
     rz2 = ry;
-    claimed_v1 = vx_claim_global;
-    claimed_v2 = vy_claim_global;
+    rw1 = rwx;
+    rw2 = rwy;
+    claimed_v1 = vx_claim;
+    claimed_v2 = vy_claim;
     
     return verified;
 }

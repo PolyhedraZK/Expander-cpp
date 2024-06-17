@@ -14,6 +14,59 @@ inline F_primitive _eq(const F_primitive& x, const F_primitive& y)
 }
 
 template<typename F_primitive>
+inline F_primitive _eq(const F_primitive& x, const F_primitive& y, const F_primitive& z)
+{
+    return x * y * z + (F_primitive::one() - x) * (F_primitive::one() - y) * (F_primitive::one() - z);
+}
+
+template<typename F_primitive>
+F_primitive _eq_vec(const std::vector<F_primitive> &x, const std::vector<F_primitive> &y)
+{
+    assert(x.size() == y.size());
+    F_primitive prod = F_primitive::one();
+    for (uint32 i = 0; i < x.size(); i++)
+    {
+        prod *= _eq(x[i], y[i]);
+    }
+    return prod;
+}
+
+
+template<typename F_primitive>
+F_primitive _eq_vec(const std::vector<F_primitive> &x, const std::vector<F_primitive> &y, const std::vector<F_primitive> &z)
+{
+    assert(x.size() == y.size());
+    assert(x.size() == z.size());
+
+    F_primitive prod = F_primitive::one();
+    for (uint32 i = 0; i < x.size(); i++)
+    {
+        prod *= _eq(x[i], y[i], z[i]);
+    }
+    return prod;
+}
+
+template<typename F_primitive>
+F_primitive _eq(const std::vector<F_primitive> &rw, uint32 world_rank, uint32 lg_world_size)
+{
+    assert(rw.size() == lg_world_size);
+
+    F_primitive prod = F_primitive::one();
+    for (uint32 i = 0; i < lg_world_size; i++)
+    {
+        if (((world_rank >> i) & 1) == 0)
+        {
+            prod *= F_primitive::one() - rw[i];
+        }
+        else
+        {
+            prod *= rw[i];
+        }
+    }
+    return prod;
+}
+
+template<typename F_primitive>
 void _eq_evals_at_primitive(const std::vector<F_primitive>& r, const F_primitive& mul_factor, F_primitive* eq_evals)
 {
     eq_evals[0] = mul_factor;

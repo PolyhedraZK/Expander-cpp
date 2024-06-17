@@ -24,15 +24,43 @@ F_primitive eval_sparse_circuit_connect_poly(
     const SparseCircuitConnection<F_primitive, nb_input>& poly,
     const std::vector<F_primitive>& rz1,
     const std::vector<F_primitive>& rz2,
+    const std::vector<F_primitive>& rw1,
+    const std::vector<F_primitive>& rw2,
     const F_primitive& alpha,
     const F_primitive& beta,
-    const std::vector<std::vector<F_primitive>>& ris)
+    const std::vector<std::vector<F_primitive>>& ris,
+    const std::vector<F_primitive>& rwx,
+    const std::vector<F_primitive>& rwy)
 {
     std::vector<F_primitive> eq_evals_at_rz1(1 << rz1.size());
     std::vector<F_primitive> eq_evals_at_rz2(1 << rz2.size());
 
-    _eq_evals_at_primitive(rz1, alpha, eq_evals_at_rz1.data());
-    _eq_evals_at_primitive(rz2, beta, eq_evals_at_rz2.data());
+    F_primitive coef_1 = F_primitive::one();
+    F_primitive coef_2 = F_primitive::one();
+
+
+    if (nb_input == 0)
+    {
+        std::vector<F_primitive> eq_evals_at_rw(1 << rw1.size());
+        _eq_evals_at_primitive(rw1, F_primitive::one(), eq_evals_at_rw.data());
+        coef_1 = std::accumulate(eq_evals_at_rw.begin(), eq_evals_at_rw.end(), F_primitive::zero());
+   
+        _eq_evals_at_primitive(rw2, F_primitive::one(), eq_evals_at_rw.data());
+        coef_2 = std::accumulate(eq_evals_at_rw.begin(), eq_evals_at_rw.end(), F_primitive::zero());
+    }
+    else if (nb_input == 1)
+    {
+        coef_1 = _eq_vec(rw1, rwx);
+        coef_2 = _eq_vec(rw2, rwx);
+    }
+    else if (nb_input == 2)
+    {
+        coef_1 = _eq_vec(rw1, rwx, rwy);
+        coef_2 = _eq_vec(rw2, rwx, rwy);
+    }
+
+    _eq_evals_at_primitive(rz1, alpha * coef_1, eq_evals_at_rz1.data());
+    _eq_evals_at_primitive(rz2, beta * coef_2, eq_evals_at_rz2.data());
     
     std::vector<std::vector<F_primitive>> eq_evals_at_ris(nb_input);
     for (uint32 i = 0; i < nb_input; i++)
