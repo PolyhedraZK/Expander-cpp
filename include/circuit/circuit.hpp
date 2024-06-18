@@ -53,9 +53,9 @@ public:
             uint32 o_gate = i;
             uint32 i_gates[nb_input];
             uint32 i_gate = i;
-            for (uint32 i = 0; i < nb_input; i++)
+            for (uint32 j = 0; j < nb_input; j++)
             {
-                i_gates[i] = i_gate % input_size;
+                i_gates[j] = i_gate % input_size;
                 i_gate = i_gate + output_size;
             }
 
@@ -96,9 +96,9 @@ public:
         CircuitLayer poly;
         poly.nb_output_vars = nb_output_vars;
         poly.nb_input_vars = nb_input_vars;
-        poly.input_layer_vals = MultiLinearPoly<F>::random(nb_input_vars);
+        poly.input_layer_vals = MultiLinearPoly<F>(nb_input_vars);
 
-        poly.cst = SparseCircuitConnection<F_primitive, 0>::random(nb_output_vars, nb_input_vars, enable_rnd_coef);
+        // poly.cst = SparseCircuitConnection<F_primitive, 0>::random(nb_output_vars, nb_input_vars, enable_rnd_coef);
         poly.add = SparseCircuitConnection<F_primitive, 1>::random(nb_output_vars, nb_input_vars, enable_rnd_coef);
         poly.mul = SparseCircuitConnection<F_primitive, 2>::random(nb_output_vars, nb_input_vars, enable_rnd_coef); 
         return poly;

@@ -108,7 +108,8 @@ void sumcheck_prove_gkr_layer(
         {
             transcript.append_f(evals[0]);
             transcript.append_f(evals[1]);
-            transcript.append_f(evals[2]);
+            transcript.append_f(evals[2]);   
+
             r = transcript.challenge_f();
         }
         MPI_Bcast(&r, sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -156,8 +157,8 @@ bool sumcheck_verify_gkr_layer(
     uint32 nb_vars = poly.nb_input_vars;
 
     F claimed_v = claimed_v1 * alpha + claimed_v2 * beta;
-    F cst = eval_sparse_circuit_connect_poly(poly.cst, rz1, rz2, rw1, rw2, alpha, beta, {}, {}, {});
-    claimed_v -= cst;
+    // F cst = eval_sparse_circuit_connect_poly(poly.cst, rz1, rz2, rw1, rw2, alpha, beta, {}, {}, {});
+    // claimed_v -= cst;
 
     // start verification
     std::vector<F_primitive> rx, ry, rwx, rwy;
@@ -165,6 +166,7 @@ bool sumcheck_verify_gkr_layer(
     F vx_claim;
     bool verified = true;
     std::vector<F> low_degree_evals;
+
     for (uint32 i_var = 0; i_var < (2 * (nb_vars + lg_world_size)); i_var++)
     {
         low_degree_evals = {proof.get_next_and_step(), proof.get_next_and_step(), proof.get_next_and_step()};

@@ -57,9 +57,11 @@ gkr_prove(
         {
             rw1[i] = transcript.challenge_f();
         }
-        _eq_evals_at_primitive(rw1, F_primitive::one(), mpi_combine_coefs.data());
+        _eq_evals_at_primitive(rw1, F_primitive::one(), mpi_combine_coefs.data());      
     }
+
     MPI_Bcast(rz1.data(), rz1.size() * sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
+    MPI_Bcast(rw1.data(), rw1.size() * sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
 
     F_primitive alpha = F_primitive::one(), beta = F_primitive::zero();
 
@@ -69,9 +71,9 @@ gkr_prove(
 
     for (int i = n_layers - 1; i >= 0; i--)
     {
-        if (world_rank == 1)
+        if (world_rank == 0)
         {
-            std::cout << "Sumcheck at layer " << i << std::endl;
+            std::cout << "Sumchecking at layer " << i << std::endl;
         }
 
         // SIDE EFFECT: rz1, rz2, rw1 and rw2 will be updated in this function
@@ -111,7 +113,7 @@ gkr_verify(
     uint32 lg_output_size = circuit.layers.back().nb_output_vars; 
     uint32 n_layers = circuit.layers.size();
     
-    std::vector<F_primitive> rz1, rz2, rwx, rwy;
+    std::vector<F_primitive> rz1, rz2, rw1, rw2;
     std::vector<F_primitive> mpi_combine_coefs(world_size);    
     
     for (uint32 i = 0; i < lg_output_size; i++)
@@ -122,9 +124,10 @@ gkr_verify(
 
     for (uint32 i = 0; i < lg_world_size; i++)
     {
-        rwx.emplace_back(transcript.challenge_f());
+        rw1.emplace_back(transcript.challenge_f());
+        rw2.emplace_back(F_primitive::zero());
     }
-    _eq_evals_at_primitive(rwx, F_primitive::one(), mpi_combine_coefs.data());
+    _eq_evals_at_primitive(rw1, F_primitive::one(), mpi_combine_coefs.data());
     
     F_primitive alpha = F_primitive::one(), beta = F_primitive::zero();
     F claimed_v1 = claimed_v, claimed_v2 = F::zero();
@@ -132,12 +135,12 @@ gkr_verify(
     bool verified = true;
     for (int i = n_layers - 1; i >= 0; i--)
     {
-        verified &= sumcheck_verify_gkr_layer(circuit.layers[i], rz1, rz2, rwx, rwy, claimed_v1, claimed_v2, alpha, beta, proof, transcript, config);
+        verified &= sumcheck_verify_gkr_layer(circuit.layers[i], rz1, rz2, rw1, rw2, claimed_v1, claimed_v2, alpha, beta, proof, transcript, config);
 
         alpha = transcript.challenge_f();
         beta = transcript.challenge_f();
     }
-    return {verified, rz1, rz2, rwx, rwy, claimed_v1, claimed_v2};
+    return {verified, rz1, rz2, rw1, rw2, claimed_v1, claimed_v2};
 }
 
 }

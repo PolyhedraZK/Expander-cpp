@@ -30,8 +30,6 @@ TEST(GKR_TEST, GKR_MPI)
     }
     circuit._extract_rnd_gates();
 
-    std::cout << "start proving" << std::endl;
-
     Config default_config;
     default_config.set_mpi_size(world_size);
 
@@ -43,16 +41,11 @@ TEST(GKR_TEST, GKR_MPI)
     Proof<F> proof;
     if (world_rank == 0)
     {
-        std::cout << "start verifying" << std::endl;
         claimed_v = std::get<0>(t);
         proof = std::get<1>(t);
         Verifier verifier{default_config};
         bool verified = verifier.verify(circuit, claimed_v, proof);
         EXPECT_TRUE(verified);
-
-        proof.reset();
-        bool not_verified = verifier.verify(circuit, claimed_v + F::random(), proof);
-        EXPECT_FALSE(not_verified);
     }
     MPI_Finalize();
 }

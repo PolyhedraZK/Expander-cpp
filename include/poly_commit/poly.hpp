@@ -147,6 +147,18 @@ public:
     uint32 nb_vars;
     std::vector<F> evals;
 
+    MultiLinearPoly(){};
+
+    MultiLinearPoly(uint32 nb_vars)
+    {
+        nb_vars = nb_vars;
+        uint32 n_evals = 1 << nb_vars;
+        for (uint32 i = 0; i < n_evals; i++)
+        {
+            evals.emplace_back(F::zero());
+        }
+    }
+
     static MultiLinearPoly random(uint32 nb_vars)
     {
         MultiLinearPoly poly;

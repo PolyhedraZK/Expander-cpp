@@ -54,7 +54,7 @@ public:
 
     Config()
     {
-        set_field(M31);
+        set_field(BN254);
         set_pc(PCType::Raw);
         
         security_bits = 100;

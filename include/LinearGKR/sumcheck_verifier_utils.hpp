@@ -38,7 +38,6 @@ F_primitive eval_sparse_circuit_connect_poly(
     F_primitive coef_1 = F_primitive::one();
     F_primitive coef_2 = F_primitive::one();
 
-
     if (nb_input == 0)
     {
         std::vector<F_primitive> eq_evals_at_rw(1 << rw1.size());

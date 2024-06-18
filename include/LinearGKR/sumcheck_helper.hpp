@@ -320,16 +320,6 @@ public:
         y_helper.prepare(nb_input_vars, pad_ptr->v_evals, pad_ptr->hg_evals, poly_ptr->input_layer_vals.evals.data());
     }
 
-    void _root_prepare_phase_two_coefs()
-    {
-        if (world_rank != 0) 
-        {
-            return; 
-        }
-
-        _eq_evals_at_primitive(rwx, F_primitive::one(), pad_ptr->eq_evals_at_rw);
-    }
-
     void _prepare_wy()
     {
         F vy = pad_ptr->v_evals[0];
