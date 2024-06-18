@@ -11,7 +11,7 @@ add_executable(keccak_benchmark bench_keccak.cpp)
 add_executable(mcl_benchmark bench_mcl.cpp)
 add_executable(kzg_benchmark bench_kzg.cpp)
 
-target_link_libraries(keccak_benchmark pthread btc_sha256)
+target_link_libraries(keccak_benchmark pthread btc_sha256 ${MPI_C_LIBRARIES})
 target_link_libraries(transcript_benchmark pthread btc_sha256)
 target_link_libraries(mcl_benchmark mcl gmp)
 target_link_libraries(kzg_benchmark mcl gmp)

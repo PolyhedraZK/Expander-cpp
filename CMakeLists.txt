@@ -15,7 +15,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(mcl)
 
 # TODO: replace this with fetch?
-find_package(MPI)
+find_package(MPI REQUIRED)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 message(STATUS "MPI HEADERS FOUND at:" ${MPI_INCLUDE_PATH})
 message(STATUS "MPI LIBRARIES FOUND at:" ${MPI_C_LIBRARIES})
