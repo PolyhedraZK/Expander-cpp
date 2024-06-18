@@ -18,10 +18,12 @@ TEST(GKR_TEST, GKR_WITH_PC_TEST)
     for (int i = n_layers - 1; i >= 0; --i)
     {
         circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2, true));
+
     }
     circuit._extract_rnd_gates();
 
     Config default_config{};
+
     default_config.set_field(M31);
 
     Prover<F, F_primitive> prover(default_config);
@@ -37,7 +39,9 @@ TEST(GKR_TEST, GKR_WITH_PC_TEST)
 
 TEST(GKR_TEST, GKR_BN254_TEST)
 {
+    Config config{};
     using namespace gkr;
+
     using F = gkr::bn254fr::BN254_Fr;
     using F_primitive = gkr::bn254fr::BN254_Fr;
 
@@ -60,6 +64,7 @@ TEST(GKR_TEST, GKR_BN254_TEST)
 
     auto claimed_v = std::get<0>(t);
     Proof<F> proof = std::get<1>(t);
+
 
     Verifier verifier(default_config);
     bool verified = verifier.verify(circuit, claimed_v, proof);
@@ -107,7 +112,7 @@ TEST(GKR_TEST, GKR_FROM_CIRCUIT_RAW_TEST)
 
     proof.reset();
     Transcript<F, F_primitive> verifier_transcript_fail;
-    
+
     bool not_verified = std::get<0>(gkr_verify<F, F_primitive>(circuit, claimed_value, verifier_transcript_fail, proof, config));
     EXPECT_FALSE(not_verified);
 }

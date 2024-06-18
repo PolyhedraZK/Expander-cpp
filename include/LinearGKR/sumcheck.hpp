@@ -156,6 +156,7 @@ bool sumcheck_verify_gkr_layer(
     uint32 lg_world_size = log_2(config.mpi_world_size);
     uint32 nb_vars = poly.nb_input_vars;
 
+
     F claimed_v = claimed_v1 * alpha + claimed_v2 * beta;
     // F cst = eval_sparse_circuit_connect_poly(poly.cst, rz1, rz2, rw1, rw2, alpha, beta, {}, {}, {});
     // claimed_v -= cst;

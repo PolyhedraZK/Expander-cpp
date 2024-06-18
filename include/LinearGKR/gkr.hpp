@@ -22,14 +22,13 @@ namespace gkr
 {
 
 
-
 template<typename F, typename F_primitive>
 std::tuple<F, 
     std::vector<F_primitive>, std::vector<F_primitive>, 
     std::vector<F_primitive>, std::vector<F_primitive>>
 gkr_prove(
     const Circuit<F, F_primitive> &circuit, 
-    GKRScratchPad<F, F_primitive> &scratch_pad,
+    GKRScratchPad<F, F_primitive> *scratch_pad,
     Transcript<F, F_primitive> &transcript,
     const Config &config
 )
@@ -41,7 +40,7 @@ gkr_prove(
 
     uint32 n_layers = circuit.layers.size();
     uint32 lg_output_size = circuit.layers.back().nb_output_vars; 
-    
+
     std::vector<F_primitive> mpi_combine_coefs(world_size);
     std::vector<F_primitive> rz1(lg_output_size, F_primitive::zero()), 
         rz2(lg_output_size, F_primitive::zero()), rw1(lg_world_size), rw2(lg_world_size);
@@ -90,7 +89,6 @@ gkr_prove(
             MPI_Bcast(&alpha, sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
             MPI_Bcast(&beta, sizeof(F_primitive), MPI_CHAR, 0, MPI_COMM_WORLD);
         }
-        
     }
     return {claimed_v_global, rz1, rz2, rw1, rw2};
 }
@@ -101,7 +99,7 @@ std::vector<F_primitive>, std::vector<F_primitive>,
 std::vector<F_primitive>, std::vector<F_primitive>, F, F> 
 gkr_verify(
     const Circuit<F, F_primitive>& circuit,
-    const F& claimed_v,
+    const std::vector<F>& claimed_v,
     Transcript<F, F_primitive>& transcript,
     Proof<F> &proof,
     const Config &config
@@ -112,14 +110,16 @@ gkr_verify(
     uint32 lg_world_size = log_2(world_size);
     uint32 lg_output_size = circuit.layers.back().nb_output_vars; 
     uint32 n_layers = circuit.layers.size();
-    
     std::vector<F_primitive> rz1, rz2, rw1, rw2;
     std::vector<F_primitive> mpi_combine_coefs(world_size);    
     
     for (uint32 i = 0; i < lg_output_size; i++)
     {
-        rz1.emplace_back(transcript.challenge_f());
-        rz2.emplace_back(F_primitive::zero());
+        for(int j = 0; j < config.get_num_repetitions(); j++)
+        {
+            rz1[j].emplace_back(transcript.challenge_f());
+            rz2[j].emplace_back(F_primitive::zero());
+        }
     }
 
     for (uint32 i = 0; i < lg_world_size; i++)
@@ -130,7 +130,12 @@ gkr_verify(
     _eq_evals_at_primitive(rw1, F_primitive::one(), mpi_combine_coefs.data());
     
     F_primitive alpha = F_primitive::one(), beta = F_primitive::zero();
-    F claimed_v1 = claimed_v, claimed_v2 = F::zero();
+    auto claimed_v1 = claimed_v;
+    std::vector<F> claimed_v2;
+    for(int j = 0; j < config.get_num_repetitions(); j++)
+    {
+        claimed_v2.emplace_back(F::zero());
+    }
 
     bool verified = true;
     for (int i = n_layers - 1; i >= 0; i--)

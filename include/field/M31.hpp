@@ -105,6 +105,10 @@ public:
     {
         memcpy(output, this, sizeof(*this));
     };
+    static int byte_length()
+    {
+        return 4;
+    }
 
     static int byte_length()
     {

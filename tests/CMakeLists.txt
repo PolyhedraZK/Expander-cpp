@@ -37,6 +37,7 @@ target_link_libraries(ff gtest_main gtest pthread mcl gmp)
 # target_link_libraries(orion_pc gtest_main gtest pthread orion)
 # target_link_libraries(fft gtest_main gtest pthread gmp gmpxx libff.a libzm.a)
 # target_link_libraries(poly gtest_main gtest pthread gmp gmpxx libff.a libzm.a)
+
 target_link_libraries(kzg gtest_main gtest pthread mcl gmp)
 # target_link_libraries(merkle_tree gtest_main gtest pthread)
 # target_link_libraries(fri gtest_main gtest pthread libff.a libzm.a gmp gmpxx XKCP)
@@ -44,6 +45,7 @@ target_link_libraries(sumcheck gtest_main gtest pthread btc_sha256 ${MPI_C_LIBRA
 target_link_libraries(gkr gtest_main gtest pthread btc_sha256 mcl gmp ${MPI_C_LIBRARIES})
 target_link_libraries(transcript gtest_main gtest pthread btc_sha256)
 target_link_libraries(gkr_mpi gtest_main gtest pthread btc_sha256 mcl gmp ${MPI_C_LIBRARIES})
+
 
 gtest_discover_tests(ff)
 # gtest_discover_tests(mimc)

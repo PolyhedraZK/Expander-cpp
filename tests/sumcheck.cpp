@@ -26,11 +26,22 @@ TEST(SUMCHECK_TEST, SUMCHECK_GKR_LAYER)
 
     std::vector<F_primitive> rz1, rz2, rw1, rw2;
 
+
     for (uint32 i = 0; i < nb_output_vars; i++)
     {
-        rz1.emplace_back(F_primitive::random());
-        rz2.emplace_back(F_primitive::random());
+        for(int j = 0; j < config.get_num_repetitions(); j++)
+        {
+            rz1[j].emplace_back(F_primitive::random());
+            rz2[j].emplace_back(F_primitive::random());
+        }
     }
+    std::vector<F> claim_v1, claim_v2;
+    for(int i = 0; i < config.get_num_repetitions(); i++)
+    {
+        claim_v1.push_back(eval_multilinear(output, rz1[i]));
+        claim_v2.push_back(eval_multilinear(output, rz2[i]));
+    }
+
     F claim_v1, claim_v2;
     claim_v1 = eval_multilinear(output, rz1);
     claim_v2 = eval_multilinear(output, rz2);

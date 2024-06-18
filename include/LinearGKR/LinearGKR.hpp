@@ -23,7 +23,6 @@ void grind(Transcript<F, F_primitive> &transcript, const Config &local_config)
         element.to_bytes(&hash_bytes[bytes_ptr]);
         bytes_ptr += ceil(local_config.field_size, 8);
     }
-
     for(int i = 0; i < (1 << local_config.grinding_bits); i++)
     {
         transcript.hasher.hash(hash_bytes, hash_bytes, 256 / 8);
@@ -49,6 +48,7 @@ public:
 
     void prepare_mem(const Circuit<F, F_primitive>& circuit)
     {
+
         scratch_pad.prepare(circuit);
     }
 
@@ -70,6 +70,8 @@ public:
         circuit.fill_rnd_gate(transcript);
         circuit.evaluate();
 
+        //grinding
+        grind(transcript, config);
         // gkr
         auto t = gkr_prove<F, F_primitive>(circuit, scratch_pad, transcript, config);
         
@@ -107,6 +109,7 @@ public:
     }
 
     template<typename F, typename F_primitive>
+
     bool verify(Circuit<F, F_primitive>& circuit, const F& claimed_v, Proof<F>& proof)
     {        
         // get commitment
@@ -120,6 +123,7 @@ public:
         
         //grinding
         grind(transcript, config);
+
         proof.step(256 / 8);
 
         // rnd gate
