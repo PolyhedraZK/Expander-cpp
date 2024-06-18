@@ -14,6 +14,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(mcl)
 
+FetchContent_Declare(
+        mpi
+        URL https://github.com/open-mpi/ompi/archive/refs/tags/v5.0.3.tar.gz
+	# DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(mpi)
+
+
 # TODO: replace this with fetch?
 find_package(MPI REQUIRED)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})

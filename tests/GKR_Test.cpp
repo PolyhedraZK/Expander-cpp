@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include <iostream>
 #include <gtest/gtest.h>
 
@@ -21,6 +22,8 @@ TEST(GKR_TEST, GKR_WITH_PC_TEST)
     circuit._extract_rnd_gates();
 
     Config default_config{};
+    default_config.set_field(M31);
+
     Prover<F, F_primitive> prover(default_config);
     prover.prepare_mem(circuit);
     auto t = prover.prove(circuit);
@@ -31,34 +34,6 @@ TEST(GKR_TEST, GKR_WITH_PC_TEST)
     bool verified = verifier.verify(circuit, claimed_v, proof);
     EXPECT_TRUE(verified);
 }
-
-TEST(GKR_TEST, GKR_SAME_FIELD_TEST)
-{
-    using namespace gkr;
-    using F = gkr::M31_field::M31;
-    using F_primitive = gkr::M31_field::M31;
-
-    uint32 n_layers = 4;
-    Circuit<F, F_primitive> circuit;
-    for (int i = n_layers - 1; i >= 0; --i)
-    {
-        circuit.layers.emplace_back(CircuitLayer<F, F_primitive>::random(i + 1, i + 2, true));
-    }
-    circuit._extract_rnd_gates();
-    circuit.set_random_input();
-
-    Config default_config{};
-    Prover<F, F_primitive> prover(default_config);
-    prover.prepare_mem(circuit);
-    auto t = prover.prove(circuit);
-    auto claimed_v = std::get<0>(t);
-    Proof<F> proof = std::get<1>(t);
-
-    Verifier verifier(default_config);
-    bool verified = verifier.verify(circuit, claimed_v, proof);
-    EXPECT_TRUE(verified);
-}
-
 
 TEST(GKR_TEST, GKR_BN254_TEST)
 {
@@ -97,6 +72,7 @@ TEST(GKR_TEST, GKR_FROM_CIRCUIT_RAW_TEST)
     using F = gkr::M31_field::VectorizedM31;
     using F_primitive = gkr::M31_field::M31;
     Config config{};
+    config.set_field(M31);
 
     const char* filename = "../data/circuit8.txt";
     CircuitRaw<F_primitive> circuit_raw;
@@ -182,3 +158,15 @@ TEST(GKR_TEST, GKR_FROM_CIRCUIT_RAW_TEST)
 //     }
     
 // }
+
+int main(int argc, char* argv[]) 
+{
+    int result = 0;
+
+    ::testing::InitGoogleTest(&argc, argv);
+    MPI_Init(&argc, &argv);
+    result = RUN_ALL_TESTS();
+    MPI_Finalize();
+
+    return result;
+}

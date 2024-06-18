@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include <gtest/gtest.h>
 
 #include "LinearGKR/gkr.hpp"
@@ -8,6 +9,8 @@
 
 TEST(SUMCHECK_TEST, SUMCHECK_GKR_LAYER)
 {
+    MPI_Init(NULL, NULL);
+
     using namespace gkr;
     using F = M31_field::VectorizedM31;
     using F_primitive = M31_field::M31;
@@ -57,4 +60,7 @@ TEST(SUMCHECK_TEST, SUMCHECK_GKR_LAYER)
     claim_v1 += non_zero;
     bool not_verified = sumcheck_verify_gkr_layer(layer, rz1, rz2, rw1, rw2, claim_v1, claim_v2, alpha, beta, proof, verifier_transcript_fail, config);
     EXPECT_FALSE(not_verified);
+
+    MPI_Finalize();
+
 }
