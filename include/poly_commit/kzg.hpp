@@ -1,22 +1,19 @@
 #pragma once
 
 #include <cassert>
-#include <libff/algebra/curves/bn128/bn128_pairing.hpp>
 
-#include "../utils/types.hpp"
+#include "utils/types.hpp"
 #include "field/bn254_fr.hpp"
 #include "poly.hpp"
 
 namespace gkr {
-namespace kzg {
+
+// Fr, G1, G2, GT
+
+using namespace mcl::bn; 
 
 // only support the bn254 field for now
-using F = libff::bn128_Fr;
-using FF = bn254_fr::BN254_Fr;
-using G1 = libff::bn128_G1;
-using G2 = libff::bn128_G2;
-using GT = libff::bn128_GT;
-
+using FF = bn254fr::BN254_Fr;
 
 struct KZGSetup 
 {
@@ -38,20 +35,23 @@ struct KZGOpening
 KZGSetup setup(const FF& secret, uint32 degree) 
 {
     KZGSetup _setup;
-    _setup.pows_g1.emplace_back(G1::G1_one);
+    _setup.pows_g1.resize(degree);
+    _setup.pows_g1[0] = G1_ONE;
 
     for (uint32 i = 1; i < degree; i++) {
-        _setup.pows_g1.emplace_back(secret.f * _setup.pows_g1[i - 1]);
+        G1::mul(_setup.pows_g1[i], _setup.pows_g1[i - 1], secret.mcl_data);
     }
-    _setup.g2_tau = secret.f * G2::G2_one;
+    G2::mul(_setup.g2_tau, G2_ONE, secret.mcl_data);
     return _setup;
 }
 
 KZGCommitment commit(const UniPoly<FF>& poly, const KZGSetup& setup) 
 {
-    G1 sum = G1::G1_zero;
+    G1 sum, tmp;
+    sum.clear();
     for (uint32 i = 0; i < poly.coefs.size(); i++) {
-        sum = sum + poly.coefs[i].f * setup.pows_g1[i];
+        G1::mul(tmp, setup.pows_g1[i], poly.coefs[i].mcl_data);
+        G1::add(sum, sum, tmp);
     }
     KZGCommitment commitment;
     commitment.c = sum;
@@ -73,44 +73,41 @@ KZGOpening open(const UniPoly<FF>& poly, const FF& x, const KZGSetup& setup)
     // FF yyy = quotient.eval_at(xx) * (xx - x);
     // assert(yy == yyy);
 
-    G1 sum = G1::G1_zero;
+    G1 sum, tmp;
+    sum.clear();
     for (uint32 i = 0; i < quotient.coefs.size(); i++) {
-        sum = sum + quotient.coefs[i].f * setup.pows_g1[i];
+        G1::mul(tmp, setup.pows_g1[i], quotient.coefs[i].mcl_data);
+        G1::add(sum, sum, tmp);
     }
     opening.p = sum;
     return opening;
 }
 
-GT pairing(const G1& g1, const G2& g2) 
-{
-    return libff::bn128_final_exponentiation(
-    libff::bn128_ate_miller_loop(
-        libff::bn128_ate_precompute_G1(g1),
-        libff::bn128_ate_precompute_G2(g2)
-    ));
-}
-
-GT double_pairing(const G1& g1, const G2& g2, const G1& gg1, const G2& gg2)
-{
-    return libff::bn128_final_exponentiation(
-        libff::bn128_double_ate_miller_loop(
-            libff::bn128_ate_precompute_G1(g1),
-            libff::bn128_ate_precompute_G2(g2),
-            libff::bn128_ate_precompute_G1(gg1),
-            libff::bn128_ate_precompute_G2(gg2)
-        )
-    );
-} 
-
 bool verify(const UniPoly<FF>& poly, const FF& x, const KZGSetup& setup, const KZGCommitment& commitment, KZGOpening& opening) 
 {
-    G1 g1 = (x.f * opening.p) + (commitment.c - opening.v.f * G1::G1_one);
-    G2 g2 = G2::G2_one;
-    G1 gg1 = -opening.p;
-    G2 gg2 = setup.g2_tau;
-    return double_pairing(g1, g2, gg1, gg2) == GT::GT_one;
+    // G1 g1 = (x.f * opening.p) + (commitment.c - opening.v.f * G1::G1_one);
+    G1 g1[2], tmp;
+    G2 g2[2];
+    
+    // g1[0]
+    G1::mul(tmp, opening.p, x.mcl_data);
+    G1::add(g1[0], tmp, commitment.c);
+    G1::mul(tmp, G1_ONE, opening.v.mcl_data);
+    G1::sub(g1[0], g1[0], tmp);
+
+    // g1[1]
+    G1::neg(g1[1], opening.p);
+    
+    // g2[0]
+    g2[0] = G2_ONE;
+    g2[1] = setup.g2_tau;
+    
+    GT res;
+    millerLoopVec(res, g1, g2, 2);
+    finalExp(res, res);
+    return res == GT_ONE;
 }
 
 }
-}
+
 

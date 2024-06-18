@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
     circuits = new Circuit<F, F_primitive>[num_thread];
 
     Config local_config;
-    printf("Default parallel repetition config %d\n", local_config.get_num_repetitions());
+    local_config.set_field(M31);    
     std::vector<std::thread> threads(num_thread);
     int *partial_proofs = new int[num_thread];
     memset(partial_proofs, 0, sizeof(partial_proofs));

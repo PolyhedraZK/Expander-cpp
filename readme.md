@@ -10,6 +10,7 @@ For more technical introduction, visit our markdown files [here](https://github.
 
 And [here](https://github.com/PolyhedraZK/Expander/tree/master/docs/example.md) for an example on how to use the gkr lib.
 
+
 ## Circuit Compiler
 
 Stay tuned, we will open-source our circuit compiler in the incoming month.
@@ -70,6 +71,7 @@ If you are running a Linux:
 sudo apt update
 sudo apt install cmake g++ libssl-dev
 cmake . -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release
+
 make
 wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
 ```
@@ -93,7 +95,6 @@ wget -P data https://storage.googleapis.com/keccak8/circuit8.txt
 We ran our benchmarks on M3 Max and AMD 7950X3D, where M3 Max can reach 4500 keccak/s and 7950X3D can reach 4700 keccak/s. To run the compiled code, simply do following:
 
 Command template:
-
 ```sh
 ./bin/keccak_benchmark NUMBER_OF_THREAD
 ```
@@ -110,8 +111,8 @@ Concretely if you are running on a 16 physical core CPU:
 
 It indicates your CPU is not supported, please check the supported CPU list above. We might support older CPU if there is a demand.
 
-### Benchmark method
 
+### Benchmark method
 We run the program for 5 minutes and take average of the results.
 
 ## How to contribute?
@@ -132,6 +133,10 @@ We welcome your pull requests (PRs) and ask that you follow these guidelines to 
   4. **Push your changes** to your fork and then **submit a pull request** to the main repository.
 
 - **PR Types and Specific Guidelines**:
+  - **[DOWNSTREAM]** for downstream changes from public repo to private repo:
+    - **Title**: Start with [DOWNSTREAM] followed by a brief description
+    - **Content**: Explain why these changes needed to be downstream from public repo.
+    - **Tests**: Any tests that shows these downstream changes are safe to merge.
   - **[BUG]** for bug fixes:
     - **Title**: Start with `[BUG]` followed by a brief description.
     - **Content**: Explain the issue being fixed, steps to reproduce, and the impact of the bug. Include any relevant error logs or screenshots.

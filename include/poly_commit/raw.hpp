@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mpi.h"
 #include "poly.hpp"
 
 namespace gkr
@@ -66,9 +67,22 @@ public:
 
     RawCommitment<F> commit(const std::vector<F> &poly_vals_)
     {
+        int world_rank, world_size;
+        MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+        MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+        
         poly_vals = poly_vals_;
+
         RawCommitment<F> c;
-        c.poly_vals = poly_vals;
+        std::vector<F> &poly_vals_global = c.poly_vals;
+        if (world_rank == 0)
+        {
+            poly_vals_global.resize(poly_vals_.size() * world_size);
+        }
+
+        MPI_Gather(poly_vals.data(), sizeof(F) * poly_vals.size(), MPI_CHAR, 
+            poly_vals_global.data(), sizeof(F) * poly_vals.size(), MPI_CHAR, 0, MPI_COMM_WORLD);
+
         return c;
     }
     RawOpening open(const std::vector<F_primitive> &x) {return RawOpening();};

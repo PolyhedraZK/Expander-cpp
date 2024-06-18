@@ -36,6 +36,8 @@ class M31 final : public BaseField<M31, Scalar>,
                                 public FFTFriendlyField<M31>
 {
 public:
+    typedef M31_field::Scalar Scalar;
+
     static M31 INV_2;
 
     uint32 x;
@@ -108,6 +110,11 @@ public:
         return 4;
     }
 
+    static int byte_length()
+    {
+        return 4;
+    }
+
     void from_bytes(const uint8* input)
     {
         memcpy(this, input, 4);
@@ -139,6 +146,11 @@ public:
         // FIXME: is this a reasonable value?
         return new_unchecked(4294967295 - 1);
     }
+
+    inline bool is_valid() const
+    {
+        return x < ((uint32) mod);
+    }
 };
 
 #ifdef __ARM_NEON
@@ -151,6 +163,8 @@ class PackedM31 final : public BaseField<PackedM31, Scalar>,
                         public FFTFriendlyField<PackedM31>
 {
 public:
+    typedef M31_field::Scalar Scalar;
+
     static PackedM31 INV_2;
 
     DATA_TYPE x;
@@ -241,6 +255,7 @@ class VectorizedM31 final : public BaseField<VectorizedM31, Scalar>,
                                         public FFTFriendlyField<VectorizedM31>
 {
     public:
+    typedef M31_field::Scalar Scalar;
     typedef M31 primitive_type;
     PackedM31 elements[vectorize_size];
 
@@ -403,6 +418,16 @@ public:
             r.elements[i] = elements[i] - rhs.elements[i];
         }
         return r;
+    }
+
+    inline VectorizedM31 operator-(const M31 &rhs) const
+    {
+        VectorizedM31 result;
+        for (int i = 0; i < vectorize_size; i++)
+        {
+            result.elements[i] = elements[i] - PackedM31::pack_full(rhs);
+        }
+        return result;
     }
 
     bool operator==(const VectorizedM31 &rhs) const

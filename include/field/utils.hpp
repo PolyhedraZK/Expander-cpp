@@ -43,11 +43,10 @@ namespace gkr
     template<typename F>
     F get_primitive_root_of_unity(uint32 order) 
     {
-        F max_order_primitive_root_of_unity;
-        uint32 max_order;
-        std::tie(max_order_primitive_root_of_unity, max_order) = F::max_order_primitive_root_of_unity();
+        F max_order_primitive_root_of_unity = F::TWO_ADIC_ROOT_OF_UNITY;
+        uint32 max_order = F::TWO_ADICITY;
         assert(max_order >= order);
-        return max_order_primitive_root_of_unity.exp(1 << (max_order - order));
+        return max_order_primitive_root_of_unity.exp(typename F::Scalar(1) << (max_order - order));
     }
 
 

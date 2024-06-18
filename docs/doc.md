@@ -3,12 +3,12 @@
 This repo implements a gkr-based proving system aiming to prove relations that can be represented by layered arithmetic circuit.
 
 ## Structure
-
 The major part of the code lies in the 'include' folder, including the definition of field, circuit, transcript, gkr protocol, and polynomial commitment. Details follow:
 
 - `include/field`. This contains the definition of fields. For now we mainly use _M31_, a prime field with $p=2^{31}-1$ being a mersenne prime. Any field implements the `include/field/basefield.hpp` should work well with the remaining part of the protocol.
 - `include/LinearGKR`. This is the major part of the protocol where we implement the sumcheck and the gkr protocol.
 - `include/poly_commit`. Here we implements several polynomial commitment scheme including _kzg_, _fri_ and _orion_, these PC schemes are mainly used to commit the input of a layered arithmetic circuit to reduce the proof size and the verifier's computation cost.
+
 - `include/fiat_shamir`. This is where we define the transcript used to perform fiat-shamir transformation in order to achieve non-interactivity.
 
 ## The GKR Protocol
@@ -69,5 +69,5 @@ In gkr reduction, a random value $\tilde{v}_{i+1}(rz)$ is reduced to two claims 
 - `include/LinearGKR/sumcheck.hpp` is where the sumcheck actually take place. It is relatively simple since all the complexity has gone to the utility files.
 
 ## Polynomial Commitment
-
 We offer several choices of polynomial commitment to be used to commit the input layer of the circuit including _kzg, fri, Orion_. In general, they should have _setup, commit, open, verify_ interfaces.
+

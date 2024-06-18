@@ -7,10 +7,14 @@
 
 # generated files
 build
+bin
 cmake-build-debug
 cmake-build-release
 Makefile
 *.a
+*.so
+*.so*
+*.dylib
 
 # related projects
 gkr-compiler
@@ -38,7 +42,7 @@ ff
 keccak_est
 gkr
 keccak_benchmark
-bin/
+transcript_benchmark
 
 # circuits
 circuit8.txt

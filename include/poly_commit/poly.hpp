@@ -85,6 +85,93 @@ public:
     }
 };
 
+template<typename F>
+class BivariatePoly
+{
+public:
+    uint32 deg_u, deg_v;
+    bool is_reference = true;
+    std::vector<F> *evals;
+
+    BivariatePoly()
+    {
+    }
+
+    BivariatePoly(uint32 deg_u_, uint32 deg_v_)
+    {
+        deg_u = deg_u_;
+        deg_v = deg_v_;
+    }
+
+    void random_init()
+    {
+        is_reference = false;
+        evals = new std::vector<F>;
+        evals->resize(deg_u * deg_v);
+        for (F &x: *evals)
+        {
+            x = F::random();
+        }
+    }
+
+    void set_evals(const std::vector<F> &evals_)
+    {
+        is_reference = false;
+        evals = new std::vector<F>{evals_};
+    }
+
+    void set_evals_by_reference(const std::vector<F> &evals_)
+    {
+        is_reference = true;
+        evals = &evals_;
+    }
+
+    inline const F& get_evals(uint32 idx) const
+    {
+        return evals->operator[](idx);
+    }
+
+    ~BivariatePoly()
+    {
+        if (!is_reference)
+        {
+            delete evals;
+        }
+    }
+};
+
+template<typename F>
+class MultiLinearPoly
+{
+public:
+    uint32 nb_vars;
+    std::vector<F> evals;
+
+    MultiLinearPoly(){};
+
+    MultiLinearPoly(uint32 nb_vars)
+    {
+        nb_vars = nb_vars;
+        uint32 n_evals = 1 << nb_vars;
+        for (uint32 i = 0; i < n_evals; i++)
+        {
+            evals.emplace_back(F::zero());
+        }
+    }
+
+    static MultiLinearPoly random(uint32 nb_vars)
+    {
+        MultiLinearPoly poly;
+        poly.nb_vars = nb_vars;
+        uint32 n_evals = 1 << nb_vars;
+        for (uint32 i = 0; i < n_evals; i++)
+        {
+            poly.evals.emplace_back(F::random());
+        }
+        return poly;
+    }
+};
+
 template<typename F, typename F_primitive>
 F eval_multilinear(const std::vector<F>& evals, const std::vector<F_primitive>& x)
 {
@@ -102,26 +189,6 @@ F eval_multilinear(const std::vector<F>& evals, const std::vector<F_primitive>& 
     }  
     return scratch[0];
 }
-
-template<typename F>
-class MultiLinearPoly
-{
-public:
-    uint32 nb_vars;
-    std::vector<F> evals;
-
-    static MultiLinearPoly random(uint32 nb_vars)
-    {
-        MultiLinearPoly poly;
-        poly.nb_vars = nb_vars;
-        uint32 n_evals = 1 << nb_vars;
-        for (uint32 i = 0; i < n_evals; i++)
-        {
-            poly.evals.emplace_back(F::random());
-        }
-        return poly;
-    }
-};
 
 } // namespace LinearGKR
 

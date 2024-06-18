@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mpi.h"
 #include "circuit/circuit.hpp"
 
 namespace gkr
@@ -30,18 +31,26 @@ private:
         eq_evals_first_half = __allocate_primitive(max_nb_output);
         eq_evals_second_half = __allocate_primitive(max_nb_output);
         gate_exists = (bool*)malloc(max_nb_input * sizeof(bool));
+
+        int32 world_size;
+        MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+        eq_evals_at_rw = __allocate_primitive(world_size);
     }
 
 public:
     F *v_evals, *hg_evals;
-    F_primitive *eq_evals_at_rx;
+    F_primitive *eq_evals_at_rx, *eq_evals_at_rw;
     F_primitive *eq_evals_at_rz1, *eq_evals_at_rz2;
     F_primitive *eq_evals_first_half, *eq_evals_second_half;
     bool *gate_exists;
 
     void prepare(const Circuit<F, F_primitive> &circuit)
     {
-        uint32 max_nb_output_vars = 0, max_nb_input_vars = 0;
+        int world_size;
+        MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+        uint32 lg_world_size = log_2(world_size);
+
+        uint32 max_nb_output_vars = lg_world_size, max_nb_input_vars = lg_world_size;
         for (const CircuitLayer<F, F_primitive> &layer: circuit.layers)
         {
             max_nb_output_vars = std::max(max_nb_output_vars, layer.nb_output_vars);
@@ -56,6 +65,7 @@ public:
         __free(v_evals);
         __free(hg_evals);
         __free(eq_evals_at_rx);
+        __free(eq_evals_at_rw);
         __free(eq_evals_at_rz1);
         __free(eq_evals_at_rz2);
         __free(eq_evals_first_half);
