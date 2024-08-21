@@ -1,5 +1,7 @@
 ![Expander](https://github.com/PolyhedraZK/Expander/blob/master/data/logo.jpg)
 
+# The CPP code has been deprecated, please move to https://github.com/PolyhedraZK/Expander-rs
+
 # Expander
 
 Expander is a proof generation backend for Polyhedra Network. It aims to support fast proof generation.
