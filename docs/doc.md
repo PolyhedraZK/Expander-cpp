@@ -59,7 +59,7 @@ In gkr reduction, a random value $\tilde{v}_{i+1}(rz)$ is reduced to two claims 
 - `include/LinearGKR/sumcheck_helper.hpp` provides the helper function for the prover.
   - Note that $f_1$ and $f_2$ are both the in the form of _production of two multi-linear functions_, so we use a class **SumcheckMultiLinearProdHelper** to facilitate the computation. This class, when taking the evaluation of the two multi-linear functions at **prepare()**, can output the required low-degree polynomials in the process of sumcheck. The interface is named **poly_eval_at()**. Whenever the verifier sends a challenge, it can take it using **receive_challenge()**, and do some computation internally to help produce the next low degree polynomial.
   - **SumcheckGKRHelper** computes the evaluations required by **SumcheckMultiLinearProdHelper**, and instantiates two of the instances.
-- `include/LinearGKR/sumcheck_common.hpp` provides a function that will be used by both the prover and the verifier, i.e. evaluates $\tilde{eq}(r, a)$ at some specific random vector $r$ and all the possible $a$ from $0$ to $2^{r.size()} - 1$. The returned value shoud have size $2^{r.size()}$.
+- `include/LinearGKR/sumcheck_common.hpp` provides a function that will be used by both the prover and the verifier, i.e. evaluates $\tilde{eq}(r, a)$ at some specific random vector $r$ and all the possible $a$ from $0$ to $2^{r.size()} - 1$. The returned value should have size $2^{r.size()}$.
 - `include/LinearGKR/sumcheck_verifier_utils` contains two functions.
 
   - **degree_2_eval** evaluates a degree-2 polynomial at some value $x$, the degree-2 polynomial is defined by its evaluation at $0, 1, 2$ as given in **vals**.
