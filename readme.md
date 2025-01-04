@@ -18,7 +18,7 @@ Stay tuned, we will open-source our circuit compiler in the incoming month.
 
 ## Orion PCS
 
-[Here](https://github.com/PolyhedraZK/Expander/tree/master/lib/Orion) provides a C++ implmenetation of [Orion](https://eprint.iacr.org/2022/1010.pdf) polynomial commitment, that can be coupled with other proof systems like (Virgo/Ligero/Hyrax/Spartan...) to achieve linear time zero-knowledge proofs.
+[Here](https://github.com/PolyhedraZK/Expander/tree/master/lib/Orion) provides a C++ implementation of [Orion](https://eprint.iacr.org/2022/1010.pdf) polynomial commitment, that can be coupled with other proof systems like (Virgo/Ligero/Hyrax/Spartan...) to achieve linear time zero-knowledge proofs.
 
 ## Roadmap
 
