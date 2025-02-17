@@ -1,0 +1,30 @@
+name: 'Code Style Checker'
+description: 'Check code style for different programming languages.'
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+   
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install jq
+
+    - name: Run the script
+      env:
+        INPUT_URL: 'https://openrouter.ai/api/v1/chat/completions'
+        INPUT_API_KEY: '${{ secrets.CHECK_STYLE_API_KEY }}'
+        INPUT_MODEL: 'deepseek/deepseek-chat'
+        INPUT_REPO_PATH: '${{ github.workspace }}'
+      run: bash ./checker.sh
